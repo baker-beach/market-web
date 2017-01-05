@@ -1,0 +1,61 @@
+package com.bakerbeach.market.shop.box;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.springframework.ui.ModelMap;
+
+import com.bakerbeach.market.cms.box.AbstractBox;
+import com.bakerbeach.market.cms.box.ProcessableBox;
+import com.bakerbeach.market.cms.box.ProcessableBoxException;
+import com.bakerbeach.market.cms.box.RedirectException;
+import com.bakerbeach.market.cms.model.Redirect;
+import com.bakerbeach.market.core.api.model.ShopContext;
+import com.bakerbeach.market.payment.api.service.PaymentService;
+import com.bakerbeach.market.payment.api.service.PaymentServiceException;
+import com.bakerbeach.market.shop.service.ShopContextHolder;
+
+@Component("com.bakerbeach.market.shop.box.CheckoutReturnPaymentBox")
+@Scope("prototype")
+public class CheckoutReturnPaymentBox extends AbstractBox implements ProcessableBox {
+
+	private static final long serialVersionUID = 1L;
+
+	@Autowired
+	private PaymentService paymentService;
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) throws ProcessableBoxException {
+
+		ShopContext shopContext = ShopContextHolder.getInstance();
+
+		Map<String, String[]> parameters = request.getParameterMap();
+		Map<String, String> param = new HashMap<String, String>();
+		for (String key : parameters.keySet()) {
+			param.put(key, parameters.get(key)[0]);
+		}
+
+		param.put("result", (String) shopContext.getRequestData().get("mode"));
+
+		try {
+			paymentService.processReturn(shopContext, param);
+		} catch (PaymentServiceException e) {
+			shopContext.getValidSteps().remove(CheckoutBox.STEP_PAYMENT);
+			throw new RedirectException(new Redirect("checkout", null));
+		}
+
+		if (shopContext.getRequestData().containsKey("redirect"))
+			throw new RedirectException(new Redirect((String) shopContext.getRequestData().get("redirect"), null));
+		else
+			throw new RedirectException(new Redirect("checkout", null));
+
+	}
+
+}
