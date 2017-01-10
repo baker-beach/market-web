@@ -35,6 +35,7 @@ import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.model.ShopCustomerAddress;
 import com.bakerbeach.market.shop.model.forms.AddressForm;
 import com.bakerbeach.market.shop.model.forms.AddressForm.AddressFormAddress;
+import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 
@@ -109,9 +110,9 @@ public class CheckoutAddressBox extends AbstractCheckoutStepBox{
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		shopContext.setShippingAddress(shippingAddress);
 		shopContext.setBillingAddress(billingAddress);
-		shopContext.getValidSteps().add(CheckoutBox.STEP_ADDRESS);
+		shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_ADDRESS);
 		
-		return new Redirect("checkout", null);
+		return new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null);
 	}
 	
 	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model) {
@@ -244,7 +245,7 @@ public class CheckoutAddressBox extends AbstractCheckoutStepBox{
 	@Override
 	public Integer getStep() {
 		// TODO Auto-generated method stub
-		return CheckoutBox.STEP_ADDRESS;
+		return CheckoutStatusResolver.STEP_ADDRESS;
 	}
 
 	@Override

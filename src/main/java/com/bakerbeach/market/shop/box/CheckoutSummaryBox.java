@@ -13,6 +13,7 @@ import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.shop.service.CartHolder;
+import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 
 @Component("com.bakerbeach.market.shop.box.CheckoutSummaryBox")
@@ -38,7 +39,7 @@ public class CheckoutSummaryBox extends AbstractCheckoutStepBox {
 	@Override
 	public Integer getStep() {
 		// TODO Auto-generated method stub
-		return CheckoutBox.STEP_SUMMARY;
+		return CheckoutStatusResolver.STEP_SUMMARY;
 	}
 	
 	@Override

@@ -1,8 +1,6 @@
 package com.bakerbeach.market.shop.box;
 
 import java.util.Map;
-import java.util.Set;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -36,6 +34,7 @@ import com.bakerbeach.market.payment.api.service.PaymentService;
 import com.bakerbeach.market.payment.api.service.PaymentServiceException;
 import com.bakerbeach.market.payment.api.service.PaymentServiceException.PaymentRedirectException;
 import com.bakerbeach.market.shop.service.CartHolder;
+import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 
@@ -44,18 +43,11 @@ import com.bakerbeach.market.shop.service.ShopContextHolder;
 public class CheckoutBox extends AbstractBox implements ProcessableBox {
 
 	private static final long serialVersionUID = 1L;
+	
+	@Autowired(required = false)
+	protected CheckoutStatusResolver checkoutStatusResolver = new CheckoutStatusResolver();
 
 	protected static Logger log = Logger.getLogger(CheckoutBox.class.getName());
-
-	protected static final int STEP_INIT = 0;
-	public static final int STEP_ADDRESS = 1;
-	protected static final int STEP_PAYMENT = 2;
-	protected static final int STEP_SUMMARY = 3;
-	protected static final int STEP_ORDER = 4;
-	protected static final int STEP_CONFIRM = 5;
-
-	private static final String[] PAGEIDS = { "checkout", "checkout-address", "checkout-payment", "checkout-summary",
-			"checkout-order", "checkout-confirm" };
 
 	@Autowired
 	private CartService cartService;
@@ -69,25 +61,22 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 	@Autowired
 	private OrderService orderService;
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model)
 			throws ProcessableBoxException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		Customer customer = CustomerHelper.getCustomer();
 		Cart cart = CartHolder.getInstance(cartService, customer);
-
-		if (shopContext.getData().containsKey("doOrder")) {
-			shopContext.getValidSteps().add(STEP_SUMMARY);
-			if (nextStepID(shopContext) == STEP_ORDER)
+		if (shopContext.getRequestData().containsKey("doOrder")) {
+			shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_SUMMARY);
+			if (checkoutStatusResolver.nextStepID(shopContext) == CheckoutStatusResolver.STEP_ORDER)
 				doOrder(request);
 				throw new RedirectException(new Redirect(getNextCheckoutStep(shopContext, cart), null));
 		} else {
-			shopContext.getValidSteps().remove(STEP_SUMMARY);
+			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_SUMMARY);
 			FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
 			flashMap.put("checkout", 1);
 			flashMap.put("messages", model.get("messages"));
-			
 			if (cart.findItemsByQualifier(CartItemQualifier.PRODUCT, CartItemQualifier.VPRODUCT).size() < 1)
 				throw new RedirectException(new Redirect("cart", null));
 			else
@@ -100,7 +89,6 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		Customer customer = CustomerHelper.getCustomer();
 		Cart cart = CartHolder.getInstance(cartService, customer);
-
 		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
 
 		try {
@@ -115,7 +103,7 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
  
 		try {
 			Order order = orderService.order(cart, customer, shopContext);
-			shopContext.getValidSteps().add(STEP_ORDER);
+			shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_ORDER);
 			Redirect redirect = new Redirect(getNextCheckoutStep(shopContext, cart), null);
 			shopContext.setOrderId(null);
 			shopContext.getValidSteps().clear();
@@ -131,34 +119,12 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 				flashMap.put("messages", messages);				
 			}
 			
-			shopContext.getValidSteps().remove(STEP_SUMMARY);
+			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_SUMMARY);
 			throw new RedirectException(new Redirect(getNextCheckoutStep(shopContext, cart), null));
 		}
 	}
 
-	private Integer nextStepID(ShopContext shopContext) {
-		Integer nextStep = STEP_INIT;
 
-		Set<Integer> validSteps = shopContext.getValidSteps();
-
-		if (validSteps.contains(STEP_ADDRESS))
-			if (validSteps.contains(STEP_PAYMENT))
-				if (validSteps.contains(STEP_SUMMARY))
-					if (validSteps.contains(STEP_ORDER))
-						nextStep = STEP_CONFIRM;
-					else
-						nextStep = STEP_ORDER;
-				else
-					nextStep = STEP_SUMMARY;
-			else
-				nextStep = STEP_PAYMENT;
-		else {
-			nextStep = STEP_ADDRESS;
-			validSteps.clear();
-		}
-
-		return nextStep;
-	}
 
 	private void initCheckout(ShopContext shopContext, Customer customer, Cart cart) {
 
@@ -169,25 +135,25 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 
 				shopContext.setBillingAddress(adddresses.get(CustomerAddress.TAG_DEFAULT_BILLING_ADDRESS));
 				shopContext.setShippingAddress(adddresses.get(CustomerAddress.TAG_DEFAULT_SHIPPING_ADDRESS));
-				shopContext.getValidSteps().add(STEP_ADDRESS);
+				shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_ADDRESS);
 			} else {
-				shopContext.getValidSteps().remove(STEP_ADDRESS);
+				shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_ADDRESS);
 			}
 		} catch (CustomerAdressServiceException e) {
-			shopContext.getValidSteps().remove(STEP_ADDRESS);
+			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_ADDRESS);
 		}
 
 		try {
 			PaymentInfo paymentInfo = paymentService.initPayment(shopContext, customer, cart);
 			if (paymentInfo.isPaymentValid())
-				shopContext.getValidSteps().add(STEP_PAYMENT);
+				shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_PAYMENT);
 			else
-				shopContext.getValidSteps().remove(STEP_PAYMENT);
+				shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_PAYMENT);
 		} catch (PaymentServiceException e) {
-			shopContext.getValidSteps().remove(STEP_PAYMENT);
+			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_PAYMENT);
 		}
 
-		shopContext.getValidSteps().add(STEP_INIT);
+		shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_INIT);
 	}
 
 	private String getNextCheckoutStep(ShopContext shopContext, Cart cart) {
@@ -200,7 +166,7 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 			}
 		}
 
-		if (!shopContext.getValidSteps().contains(STEP_INIT)) {
+		if (!shopContext.getValidSteps().contains(CheckoutStatusResolver.STEP_INIT)) {
 			initCheckout(shopContext, customer, cart);
 
 			// calculating the cart after initCheckout seems to be a good idea
@@ -209,18 +175,18 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 		} else {
 			PaymentInfo paymentInfo = paymentService.getPaymentInfo(shopContext);
 			if (paymentInfo.isPaymentValid())
-				shopContext.getValidSteps().add(STEP_PAYMENT);
+				shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_PAYMENT);
 
 		}
 
 		if (shopContext.getShippingAddress() != null) {
 			if (!shopContext.isCountryValid(shopContext.getShippingAddress().getCountryCode())) {
 				shopContext.setShippingAddress(null);
-				shopContext.getValidSteps().remove(STEP_ADDRESS);
+				shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_ADDRESS);
 			}
 		}
 
-		return PAGEIDS[nextStepID(shopContext)];
+		return checkoutStatusResolver.nextStepPageId(shopContext);
 	}
 
 }

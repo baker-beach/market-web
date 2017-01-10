@@ -22,6 +22,7 @@ import com.bakerbeach.market.payment.api.model.PaymentInfo;
 import com.bakerbeach.market.payment.api.service.PaymentService;
 import com.bakerbeach.market.payment.api.service.PaymentServiceException;
 import com.bakerbeach.market.shop.service.CartHolder;
+import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 
@@ -33,7 +34,7 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 
 	@Autowired
 	private PaymentService paymentService;
-
+	
 	@Autowired
 	private CartService cartService;
 
@@ -42,10 +43,8 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 	protected void handleActionRequestForward(HttpServletRequest request, HttpServletResponse response,
 			ModelMap modelMap) throws ProcessableBoxException {
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
-
 		ShopContext shopContext = ShopContextHolder.getInstance();
-
+		Cart cart = CartHolder.getInstance(cartService, customer);
 		if (request.getMethod().equals("GET")) {
 			try {
 				PaymentInfo paymentInfo = paymentService.initPayment(shopContext, customer, cart);
@@ -61,8 +60,8 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 				}
 				PaymentInfo paymentInfo = paymentService.configPaymentMethod(shopContext, param);
 				if(paymentInfo.isPaymentValid()){
-					shopContext.getValidSteps().add(CheckoutBox.STEP_PAYMENT);
-					throw new RedirectException(new Redirect("checkout",null));
+					shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_PAYMENT);
+					throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext),null));
 				}
 				throw new RedirectException(new Redirect(request.getHeader("Referer"), null, Redirect.RAW));
 			} catch (PaymentServiceException e) {}
@@ -73,7 +72,7 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 	@Override
 	public Integer getStep() {
 		// TODO Auto-generated method stub
-		return CheckoutBox.STEP_PAYMENT;
+		return CheckoutStatusResolver.STEP_PAYMENT;
 	}
 
 	@Override

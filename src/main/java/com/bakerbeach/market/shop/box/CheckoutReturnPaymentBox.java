@@ -19,6 +19,7 @@ import com.bakerbeach.market.cms.model.Redirect;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.payment.api.service.PaymentService;
 import com.bakerbeach.market.payment.api.service.PaymentServiceException;
+import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 
 @Component("com.bakerbeach.market.shop.box.CheckoutReturnPaymentBox")
@@ -29,6 +30,9 @@ public class CheckoutReturnPaymentBox extends AbstractBox implements Processable
 
 	@Autowired
 	private PaymentService paymentService;
+	
+	@Autowired(required = false)
+	protected CheckoutStatusResolver checkoutStatusResolver = new CheckoutStatusResolver();
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -47,14 +51,14 @@ public class CheckoutReturnPaymentBox extends AbstractBox implements Processable
 		try {
 			paymentService.processReturn(shopContext, param);
 		} catch (PaymentServiceException e) {
-			shopContext.getValidSteps().remove(CheckoutBox.STEP_PAYMENT);
-			throw new RedirectException(new Redirect("checkout", null));
+			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_PAYMENT);
+			throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
 		}
 
 		if (shopContext.getRequestData().containsKey("redirect"))
 			throw new RedirectException(new Redirect((String) shopContext.getRequestData().get("redirect"), null));
 		else
-			throw new RedirectException(new Redirect("checkout", null));
+			throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
 
 	}
 
