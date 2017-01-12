@@ -39,7 +39,7 @@ public abstract class AbstractProductListBox extends AbstractBox {
 	protected String groupKey = DEFAULT_GROUP_KEY_VALUE;
 
 	protected static final String PATH_PREFIX_KEY = "path_prefix";
-	protected static final String DEFAULT_PATH_PREFIX = "/";	
+	protected static final String DEFAULT_PATH_PREFIX = "";	
 	protected String pathPrefix = DEFAULT_PATH_PREFIX;
 
 	protected static final String SORT_PARAM = "sort";
@@ -54,6 +54,8 @@ public abstract class AbstractProductListBox extends AbstractBox {
 	protected static final Integer DEFAULT_OFFSET = 0;
 	protected static final String PAGE_SIZE_PARAM = "pagesize";
 	protected static final String PAGE_PARAM = "page";
+	
+	protected List<String> filterQueries = new ArrayList<>();
 	
 	protected Boolean isGetOnly = false;
 
@@ -157,29 +159,28 @@ public abstract class AbstractProductListBox extends AbstractBox {
 		return new Pager(pageSize, pageNumber);
 	}
 	
-	protected FilterList getFilterList(Boolean isGetOnly, Map<String, String[]> parameter) {	
+	protected FilterList getFilterList(Boolean isGetOnly, ListValuedMap<String, String> parameter) {	
 		FilterList filterList = FacetFactory.newInstance(isGetOnly);
-		
+
 		for (String key : parameter.keySet()) {
-			
 			if (key.equals("min_price")) {
 				Filter filter = filterList.get("price");
 				if (filter != null) {
-					Option option = new FieldOption(parameter.get("min_price")[0], null, true);
+					Option option = new FieldOption(parameter.get("min_price").get(0), null, true);
 					filter.addOption(option);
 					filter.setActive(true);
 				}				
 			} else if (key.equals("max_price")) {
 				Filter filter = filterList.get("price");
 				if (filter != null) {
-					Option option = new FieldOption(parameter.get("max_price")[0], null, true);
+					Option option = new FieldOption(parameter.get("max_price").get(0), null, true);
 					filter.addOption(option);
 					filter.setActive(true);
 				}
 			} else {
 				Filter filter = filterList.get(key);
 				if (filter != null) {
-					String[] values = parameter.get(key);
+					List<String> values = parameter.get(key);
 					for (String code : values) {				
 						Option option = new FieldOption(code, null, true);
 						filter.addOption(option);
@@ -192,6 +193,23 @@ public abstract class AbstractProductListBox extends AbstractBox {
 		return filterList;
 	}
 
+	protected ListValuedMap<String, String> getQueryParameter(Locale locale, Map<String, String[]> requestParameter) {
+		ListValuedMap<String, String> queryParameter = new ArrayListValuedHashMap<String, String>();
+		
+		for (String key : requestParameter.keySet()) {
+			for (int i = 0; i < requestParameter.get(key).length; i++) {
+				try {
+					I18NMessage msg = translationService.getReverseUrlTranslation(Arrays.asList(key), requestParameter.get(key)[i], LocaleUtils.toLocale(locale.getLanguage()));
+					queryParameter.put(msg.getTag(), msg.getText(locale.getLanguage()));
+				} catch (TranslationServiceException e) {
+					log.error(ExceptionUtils.getStackTrace(e));
+				}
+			}
+		}
+		
+		return queryParameter;
+	}
+	
 	protected ListValuedMap<String, String> getPathParameter(Locale locale, String path, String prefix) {
 		ListValuedMap<String, String> parameter = new ArrayListValuedHashMap<String, String>();
 

@@ -1,6 +1,5 @@
 package com.bakerbeach.market.shop.box;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Currency;
 import java.util.Date;
@@ -13,39 +12,65 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.collections4.ListValuedMap;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.LocaleUtils;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.ModelMap;
 
 import com.bakerbeach.market.catalog.model.CatalogSearchResult;
 import com.bakerbeach.market.catalog.model.GroupedProduct;
-import com.bakerbeach.market.catalog.model.Pager;
 import com.bakerbeach.market.cms.box.Box;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.core.api.model.FilterList;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
-import com.bakerbeach.market.translation.api.model.I18NMessage;
-import com.bakerbeach.market.translation.service.TranslationServiceException;
 
 @Component("com.bakerbeach.market.shop.box.ProductListBox")
 @Scope("prototype")
 public class ProductListBox extends AbstractProductListBox implements ProcessableBox {
 	protected static final long serialVersionUID = 1L;
 
-	private static final Logger log = LoggerFactory.getLogger(ProductListBox.class);
-	
-	private static final String PATH_PREFIX_KEY = "path_prefix";
-	private static final String DEFAULT_PATH_PREFIX= "/products";
-	
-	protected String pathPrefix = DEFAULT_PATH_PREFIX;
+	@SuppressWarnings("unchecked")
+	@Override
+	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap)
+			throws ProcessableBoxException {
+		
+		Map<String, String[]> parameter = new HashMap<String, String[]>(request.getParameterMap());
+		init(parameter);
 
+		ShopContext cmsContext = ShopContextHolder.getInstance();
+		Locale locale = cmsContext.getCurrentLocale();
+		
+		ListValuedMap<String, String> pathParameter = getPathParameter(locale, cmsContext.getPath(), pathPrefix);
+		ListValuedMap<String, String> queryParameter = getQueryParameter(locale, parameter);
+		
+		ListValuedMap<String, String> parameterUnion = new ArrayListValuedHashMap<String, String>(pathParameter);
+		parameterUnion.putAll(queryParameter);
+
+		String priceGroup = cmsContext.getCurrentPriceGroup();
+		Currency currency = Currency.getInstance(cmsContext.getCurrency());
+		String assortmentCode = cmsContext.getAssortmentCode();
+		String countryOfDelivery = cmsContext.getCountryOfDelivery();
+		Date date = new Date();
+
+		CatalogSearchResult catalogSearchResult = null;
+		try {
+			FilterList filterList = getFilterList(isGetOnly, parameterUnion);
+			
+			catalogSearchResult = catalogService.groupIndexQuery(locale, priceGroup, currency, assortmentCode,
+					countryOfDelivery, date, filterList, query, filterQueries, groupKey, pager, sort);			
+			catalogSearchResult.setFilterUrl(pathPrefix);
+		} catch (Exception e) {
+			log.error(ExceptionUtils.getStackTrace(e));
+		}
+
+		modelMap.addAttribute("catalogSearchResult", catalogSearchResult);
+		
+	}
+	
+/*
 	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Override
 	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap)
@@ -133,7 +158,8 @@ public class ProductListBox extends AbstractProductListBox implements Processabl
 
 		modelMap.addAttribute("catalogSearchResult", catalogSearchResult);
 	}
-
+*/
+	
 	@Override
 	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
 		CatalogSearchResult catalogSearchResult = (CatalogSearchResult) modelMap.get("catalogSearchResult");

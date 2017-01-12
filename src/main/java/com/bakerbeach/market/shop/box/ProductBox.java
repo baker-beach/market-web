@@ -48,37 +48,66 @@ public class ProductBox extends AbstractBox implements ProcessableBox {
 
 	@Autowired
 	protected TranslationService translationService;
-
+	
 	@SuppressWarnings("deprecation")
 	@Override
 	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) throws ProcessableBoxException{
-		ShopContext cmsContext = ShopContextHolder.getInstance();
+		ShopContext context = ShopContextHolder.getInstance();
 
-		if (cmsContext.getData().containsKey("primary_group")) {
-			try {				
-				String primaryGroup = (String) cmsContext.getData().get("primary_group");
-				
-				Locale locale = cmsContext.getCurrentLocale();
-				String priceGroup = cmsContext.getCurrentPriceGroup();
-				Currency currency = Currency.getInstance(cmsContext.getCurrency());
-				String countryOfDelivery = cmsContext.getCountryOfDelivery();
+		String group = getGroup(context);
+		if (StringUtils.isNotBlank(group)) {
+			try {
+				Locale locale = context.getCurrentLocale();
+				String priceGroup = context.getCurrentPriceGroup();
+				Currency currency = Currency.getInstance(context.getCurrency());
+				String countryOfDelivery = context.getCountryOfDelivery();
 				Date date = new Date();
 				
 				CatalogSearchResult catalogSearchResult = catalogService.findGroupByGroupCode(locale, priceGroup,
-						currency, countryOfDelivery, date, Arrays.asList(primaryGroup));
+						currency, countryOfDelivery, date, Arrays.asList(group));
 				GroupedProduct product = catalogSearchResult.getProducts().iterator().next();
 				getData().put("product", product);
 				
 				modelMap.addAttribute("productBox", this);				
 			} catch (Exception e) {
+				log.warn(ExceptionUtils.getMessage(e));
+				
 				Redirect redirect = new Redirect("/", null, Redirect.RAW);
 				throw new RedirectException(redirect);
-
 			}
 		} else {
 			Redirect redirect = new Redirect("/", null, Redirect.RAW);
 			throw new RedirectException(redirect);
+			
 		}
+		
+
+		
+//		if (cmsContext.getData().containsKey("primary_group")) {
+//			try {				
+//				String primaryGroup = (String) cmsContext.getData().get("primary_group");
+//				
+//				Locale locale = cmsContext.getCurrentLocale();
+//				String priceGroup = cmsContext.getCurrentPriceGroup();
+//				Currency currency = Currency.getInstance(cmsContext.getCurrency());
+//				String countryOfDelivery = cmsContext.getCountryOfDelivery();
+//				Date date = new Date();
+//				
+//				CatalogSearchResult catalogSearchResult = catalogService.findGroupByGroupCode(locale, priceGroup,
+//						currency, countryOfDelivery, date, Arrays.asList(primaryGroup));
+//				GroupedProduct product = catalogSearchResult.getProducts().iterator().next();
+//				getData().put("product", product);
+//				
+//				modelMap.addAttribute("productBox", this);				
+//			} catch (Exception e) {
+//				Redirect redirect = new Redirect("/", null, Redirect.RAW);
+//				throw new RedirectException(redirect);
+//
+//			}
+//		} else {
+//			Redirect redirect = new Redirect("/", null, Redirect.RAW);
+//			throw new RedirectException(redirect);
+//		}
 	}
 
 	@Override
@@ -98,6 +127,16 @@ public class ProductBox extends AbstractBox implements ProcessableBox {
 			} catch (Exception e) {
 				log.error(ExceptionUtils.getStackTrace(e));
 			}
+		}
+	}
+
+	protected String getGroup(ShopContext context) {
+		if (context.getRequestData().containsKey("primary_group")) {
+			return (String) context.getRequestData().get("primary_group");
+		} else if (context.getRequestData().containsKey("group")) {
+			return (String) context.getRequestData().get("group");
+		} else {
+			return null;
 		}
 	}
 

@@ -184,8 +184,9 @@ public class ShopHelper extends Helper {
 
 		StringBuilder url = new StringBuilder();
 
-		if (filterUrl != null)
+		if (StringUtils.isNotBlank(filterUrl)) {
 			url.append(filterUrl);
+		}
 
 		Filter _filter = null;
 		if (currentOption != null)
