@@ -87,9 +87,9 @@ public abstract class AbstractProductListBox extends AbstractBox {
 
 		if (parameter.containsKey(SORT_PARAM)) {
 			sort = (String) parameter.get(SORT_PARAM)[0];
-			if (StringUtils.isBlank(sort)) {
-				sort = groupKey.concat("_sort asc");
-			}
+		}
+		if (StringUtils.isBlank(sort)) {
+			sort = groupKey.concat("_sort asc");
 		}
 
 		if (parameter.containsKey(PAGE_SIZE_PARAM)) {
