@@ -267,13 +267,15 @@ public class CartEditBox extends AbstractBox implements ProcessableBox {
 				}
 
 				BigDecimal unitPrice = product.getPrice();
+				BigDecimal monthlyUnitPrice = product.getMonthlyPrice();
 				for (CartItemComponent component : cartItem.getComponents().values()) {
 					for (CartItemOption option : component.getOptions().values()) {
 						unitPrice = unitPrice.add(option.getUnitPrice().multiply(new BigDecimal(option.getQuantity())));
+						monthlyUnitPrice = monthlyUnitPrice.add(option.getMonthlyUnitPrice().multiply(new BigDecimal(option.getQuantity())));
 					}
 				}
 				cartItem.setUnitPrice(unitPrice);
-
+				cartItem.setMonthlyUnitPrice(monthlyUnitPrice);
 			}
 			cartItems.add(cartItem);
 		}
@@ -286,6 +288,7 @@ public class CartEditBox extends AbstractBox implements ProcessableBox {
 		cartItem.setTaxCode(product.getTaxCode());
 		cartItem.setUnitPrice(product.getPrice());
 		cartItem.setUnitPrices(product.getPrices());
+		cartItem.setMonthlyUnitPrice(product.getMonthlyPrice());
 		
 		cartItem.setTitle1(translationService.getMessage("product.cart.title1", "text", product.getGtin(), null, null, locale));
 		cartItem.setTitle2(translationService.getMessage("product.cart.title2", "text", product.getGtin(), null, null, locale));
@@ -304,6 +307,7 @@ public class CartEditBox extends AbstractBox implements ProcessableBox {
 		cartItemOption.setQuantity(quantity);
 		cartItemOption.setUnitPrice(option.getPrice());
 		cartItemOption.setUnitPrices(option.getPrices());
+		cartItemOption.setMonthlyUnitPrice(option.getMonthlyPrice());
 		String optionTitle1 = translationService.getMessage("option.title1", "text", option.getGtin(), null,
 				option.getGtin(), locale);
 		cartItemOption.setTitle1(optionTitle1);
