@@ -28,26 +28,18 @@ public abstract class AbstractCheckoutStepBox extends AbstractBox implements Pro
 		ShopContext cmsContext = ShopContextHolder.getInstance();
 
 		if (checkoutStatusResolver.isStepvalid(cmsContext, getStep())) {
-
-			if (preHandleActionRequestForward(request, response, modelMap))
-				handleActionRequestForward(request, response, modelMap);
-
+			handleActionRequestForward(request, response, modelMap);
 		} else {
-
 			if (modelMap.containsKey("messages")) {
 				FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
 				flashMap.put("messages", modelMap.get("messages"));
 			}
-
 			throw new RedirectException(new Redirect("checkout", null));
 		}
-
 	}
 
 	protected abstract void handleActionRequestForward(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) throws ProcessableBoxException;
 
 	public abstract Integer getStep();
-
-	protected abstract boolean preHandleActionRequestForward(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) throws ProcessableBoxException;
 
 }

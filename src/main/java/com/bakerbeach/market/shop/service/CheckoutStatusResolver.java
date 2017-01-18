@@ -40,6 +40,12 @@ public class CheckoutStatusResolver {
 		return nextStep;
 	}
 	
+	public void clear(ShopContext shopContext){
+		Set<Integer> validSteps = shopContext.getValidSteps();
+		validSteps.clear();
+		shopContext.setOrderId(null);
+	}
+	
 	public String nextStepPageId(ShopContext shopContext) {
 		return PAGEIDS[nextStepID(shopContext)];
 	}

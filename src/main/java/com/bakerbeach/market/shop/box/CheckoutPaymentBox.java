@@ -71,14 +71,6 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 	
 	@Override
 	public Integer getStep() {
-		// TODO Auto-generated method stub
 		return CheckoutStatusResolver.STEP_PAYMENT;
-	}
-
-	@Override
-	protected boolean preHandleActionRequestForward(HttpServletRequest request, HttpServletResponse response,
-			ModelMap modelMap) throws ProcessableBoxException {
-		return true;
-	}
-	
+	}	
 }
