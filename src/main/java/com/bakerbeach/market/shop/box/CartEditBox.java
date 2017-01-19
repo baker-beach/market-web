@@ -268,15 +268,20 @@ public class CartEditBox extends AbstractBox implements ProcessableBox {
 
 				BigDecimal unitPrice = product.getPrice();
 				BigDecimal monthlyUnitPrice = product.getMonthlyPrice();
+				if (monthlyUnitPrice == null)
+					monthlyUnitPrice = BigDecimal.ZERO;
 				for (CartItemComponent component : cartItem.getComponents().values()) {
 					for (CartItemOption option : component.getOptions().values()) {
 						unitPrice = unitPrice.add(option.getUnitPrice().multiply(new BigDecimal(option.getQuantity())));
-						monthlyUnitPrice = monthlyUnitPrice.add(option.getMonthlyUnitPrice().multiply(new BigDecimal(option.getQuantity())));
+						if (option.getMonthlyUnitPrice() != null) {
+							monthlyUnitPrice = monthlyUnitPrice.add(option.getMonthlyUnitPrice().multiply(new BigDecimal(option.getQuantity())));							
+						}
 					}
 				}
 				cartItem.setUnitPrice(unitPrice);
 				cartItem.setMonthlyUnitPrice(monthlyUnitPrice);
 			}
+			
 			cartItems.add(cartItem);
 		}
 
