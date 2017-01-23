@@ -12,6 +12,8 @@ import com.bakerbeach.market.cart.api.service.CartService;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.Customer;
+import com.bakerbeach.market.customer.api.service.CustomerService;
+import com.bakerbeach.market.customer.api.service.CustomerServiceException;
 import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 
@@ -24,10 +26,20 @@ public class HeaderBox extends AbstractBox{
 	@Autowired
 	private CartService cartService;
 	
+	@Autowired
+	private CustomerService customerService;
+	
 	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
 		
 		Customer customer = CustomerHelper.getCustomer();
 		getData().put("customer", customer);
+
+		try {
+			customerService.findByEmail("foo", "bar");
+		} catch (CustomerServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		Boolean authenticated = CustomerHelper.isCustomer();
 		getData().put("authenticated", authenticated);
