@@ -215,4 +215,8 @@ public class ShopHelper extends Helper {
    		return StringUtils.substringAfterLast(str, separator);
    	}
    	
+   	public ShopContext getShopContext() {
+   		return ShopContextHolder.getInstance();
+   	}
+   	
 }
