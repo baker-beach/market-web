@@ -44,7 +44,7 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-cart</artifactId>
-			<version>[2.1.0,2.2.0)</version>
+			<version>[2.1.2-SNAPSHOT]</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
