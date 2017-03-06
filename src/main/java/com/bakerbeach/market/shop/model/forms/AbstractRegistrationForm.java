@@ -85,5 +85,5 @@ public class AbstractRegistrationForm implements RegisterForm{
 	public void setRegisterSuffix(String registerSuffix) {
 		this.registerSuffix = registerSuffix;
 	}
-
+	
 }

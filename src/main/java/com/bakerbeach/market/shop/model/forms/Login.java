@@ -1,9 +1,9 @@
 package com.bakerbeach.market.shop.model.forms;
 
+import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotEmpty;
 
 public class Login {
-	
 	private String loginEmail;
 	private String loginPassword;
 	private Boolean subscription = false;
@@ -35,7 +35,7 @@ public class Login {
 		this.loginEmail = loginEmail;
 	}
 
-	@NotEmpty(message = "login.error.password")
+	@Length(min = 5, message = "login.error.password.minLength")
 	public String getLoginPassword() {
 		return loginPassword;
 	}
