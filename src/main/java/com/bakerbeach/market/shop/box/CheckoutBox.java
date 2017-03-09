@@ -1,6 +1,7 @@
 package com.bakerbeach.market.shop.box;
 
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -14,7 +15,6 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 
 import com.bakerbeach.market.address.api.service.CustomerAddressService;
 import com.bakerbeach.market.address.api.service.CustomerAdressServiceException;
-import com.bakerbeach.market.cart.api.service.CartService;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
@@ -37,6 +37,7 @@ import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
+import com.bakerbeach.market.xcart.api.service.XCartService;
 
 @Component("com.bakerbeach.market.shop.box.CheckoutBox")
 @Scope("prototype")
@@ -50,7 +51,7 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 	protected static Logger log = Logger.getLogger(CheckoutBox.class.getName());
 
 	@Autowired
-	private CartService cartService;
+	private XCartService cartService;
 
 	@Autowired
 	private PaymentService paymentService;

@@ -42,7 +42,6 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 
 	@Autowired
 	@Qualifier("catalogService")
-//	protected StdXCatalogServiceImpl cs;
 	protected XCatalogService cs;
 
 	@Autowired

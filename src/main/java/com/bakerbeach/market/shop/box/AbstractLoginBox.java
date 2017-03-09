@@ -1,10 +1,7 @@
 package com.bakerbeach.market.shop.box;
 
-import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -14,8 +11,6 @@ import org.apache.shiro.web.util.SavedRequest;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.bakerbeach.market.cart.api.service.CartService;
-import com.bakerbeach.market.cart.api.service.CartServiceException;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.model.Redirect;
@@ -23,12 +18,14 @@ import com.bakerbeach.market.cms.service.Helper;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.shop.service.CartHolder;
+import com.bakerbeach.market.xcart.api.service.XCartServiceException;
+import com.bakerbeach.market.xcart.api.service.XCartService;
 
 public abstract class AbstractLoginBox extends AbstractBox implements ProcessableBox {
 	private static final long serialVersionUID = 1L;
 
 	@Autowired
-	private CartService cartService;
+	private XCartService cartService;
 	
 	protected Redirect onSuccessfulAuthentication(HttpServletRequest request, Helper helper) {
 		Subject subject = SecurityUtils.getSubject();
@@ -47,7 +44,7 @@ public abstract class AbstractLoginBox extends AbstractBox implements Processabl
 					cartService.saveCart(customer, cart);
 				}
 			}
-		} catch (CartServiceException e) {
+		} catch (XCartServiceException e) {
 			log.error(ExceptionUtils.getStackTrace(e));
 		}
 

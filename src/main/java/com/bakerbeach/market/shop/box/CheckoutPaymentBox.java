@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.ModelMap;
 
-import com.bakerbeach.market.cart.api.service.CartService;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.cms.box.RedirectException;
 import com.bakerbeach.market.cms.model.Redirect;
@@ -25,6 +24,7 @@ import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
+import com.bakerbeach.market.xcart.api.service.XCartService;
 
 @Component("com.bakerbeach.market.shop.box.CheckoutPaymentBox")
 @Scope("prototype")
@@ -36,7 +36,7 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 	private PaymentService paymentService;
 	
 	@Autowired
-	private CartService cartService;
+	private XCartService cartService;
 
 	@SuppressWarnings("unchecked")
 	@Override

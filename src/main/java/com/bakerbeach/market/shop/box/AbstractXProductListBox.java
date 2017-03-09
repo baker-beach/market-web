@@ -13,7 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.bakerbeach.market.catalog.utils.FacetFactory;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.service.PageService;
 import com.bakerbeach.market.core.api.model.ShopContext;
@@ -239,7 +238,7 @@ public abstract class AbstractXProductListBox extends AbstractBox {
 		}
 		
 		if (StringUtils.isNotBlank(attributePath)) {
-			List<String> tags = new ArrayList<>(FacetFactory.getUrlRelevantFilters());
+			List<String> tags = new ArrayList<>(XFacetFactory.getUrlRelevantFilters());
 			tags.remove("category");
 			
 			List<String> attributes = Arrays.asList(attributePath.split("_"));
@@ -279,7 +278,7 @@ public abstract class AbstractXProductListBox extends AbstractBox {
 		
 		String attributePath = StringUtils.substringAfter(path, "/_");
 		if (!attributePath.isEmpty()) {
-			List<String> tags = new ArrayList<>(FacetFactory.getUrlRelevantFilters());
+			List<String> tags = new ArrayList<>(XFacetFactory.getUrlRelevantFilters());
 			tags.remove("category");
 			
 			List<String> attributes = Arrays.asList(attributePath.split("_"));
