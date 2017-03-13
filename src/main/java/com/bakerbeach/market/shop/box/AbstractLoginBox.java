@@ -17,9 +17,11 @@ import com.bakerbeach.market.cms.model.Redirect;
 import com.bakerbeach.market.cms.service.Helper;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.Customer;
+import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.CartHolder;
-import com.bakerbeach.market.xcart.api.service.XCartServiceException;
+import com.bakerbeach.market.shop.service.ShopContextHolder;
 import com.bakerbeach.market.xcart.api.service.XCartService;
+import com.bakerbeach.market.xcart.api.service.XCartServiceException;
 
 public abstract class AbstractLoginBox extends AbstractBox implements ProcessableBox {
 	private static final long serialVersionUID = 1L;
@@ -28,13 +30,16 @@ public abstract class AbstractLoginBox extends AbstractBox implements Processabl
 	private XCartService cartService;
 	
 	protected Redirect onSuccessfulAuthentication(HttpServletRequest request, Helper helper) {
+		ShopContext shopContext = ShopContextHolder.getInstance();
+		String shopCode = shopContext.getShopCode();
+
 		Subject subject = SecurityUtils.getSubject();
 		Customer customer = (Customer) subject.getPrincipal();
 		
-		Cart cart = CartHolder.getInstance(cartService, customer);
+		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
 		try {
 			if (cart != null && !customer.getId().equals(cart.getCustomerId())) {
-				Cart lastActiveCart = cartService.loadActiveCart(customer);
+				Cart lastActiveCart = cartService.loadActiveCart(shopCode, customer);
 				if (lastActiveCart != null) {
 					cartService.merge(cart, lastActiveCart);
 					CartHolder.setInstance(lastActiveCart);

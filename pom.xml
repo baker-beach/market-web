@@ -44,12 +44,12 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-shipping</artifactId>
-			<version>1.1.1</version>
+			<version>[1.1.1,1.2.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-payment</artifactId>
-			<version>[1.0.5,)</version>
+			<version>[1.1.0,1.2.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>

@@ -30,9 +30,11 @@ public class CurrencyBox extends AbstractBox implements ProcessableBox{
 
 	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model) throws RedirectException{
 		ShopContext shopContext = ShopContextHolder.getInstance();
+		String shopCode = shopContext.getShopCode();
+
 		Customer customer = CustomerHelper.getCustomer();
 
-		Cart cart = CartHolder.getInstance(cartService, customer);
+		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
 		
 		if(shopContext.getRequestData().containsKey("currency")){
 			String currency = (String) shopContext.getRequestData().get("currency");

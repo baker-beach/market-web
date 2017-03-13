@@ -33,11 +33,13 @@ public class CheckoutSummaryBox extends AbstractCheckoutStepBox {
 	protected void handleActionRequestForward(HttpServletRequest request, HttpServletResponse response,
 			ModelMap modelMap) throws ProcessableBoxException {
 		
-		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
 		ShopContext shopContext = ShopContextHolder.getInstance();
+		String shopCode = shopContext.getShopCode();
 		
-		if (cart.findItemsByQualifier(CartItemQualifier.PRODUCT, CartItemQualifier.VPRODUCT).size() < 1){
+		Customer customer = CustomerHelper.getCustomer();
+		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+		
+		if (cart.findItemsByQualifier(CartItemQualifier.PRODUCT, CartItemQualifier.VPRODUCT).size() < 1) {
 			checkoutStatusResolver.clear(shopContext);
 			throw new RedirectException(new Redirect("cart", null));
 		}

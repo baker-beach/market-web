@@ -3,16 +3,15 @@ package com.bakerbeach.market.shop.box;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.FlashMap;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
-import com.bakerbeach.market.xcart.api.service.XCartServiceException;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
@@ -44,6 +42,7 @@ import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 import com.bakerbeach.market.translation.api.service.TranslationService;
 import com.bakerbeach.market.xcart.api.service.XCartService;
+import com.bakerbeach.market.xcart.api.service.XCartServiceException;
 import com.bakerbeach.market.xcatalog.model.Price;
 import com.bakerbeach.market.xcatalog.model.Product;
 import com.bakerbeach.market.xcatalog.service.XCatalogService;
@@ -128,8 +127,10 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 
 	protected final Messages addItems(ShopContext shopContext, Collection<CartItem> cartItems)
 			throws XCartServiceException {
+		String shopCode = shopContext.getShopCode();
+
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
 
 		Messages messages = new MessagesImpl();
 
@@ -149,8 +150,10 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 
 	protected final Messages updateQuantities(QuantityUpdateCartForm cartForm) throws XCartServiceException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
+		String shopCode = shopContext.getShopCode();
+
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
 
 		Messages messages = new MessagesImpl();
 
@@ -163,50 +166,61 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 		cartService.calculate(shopContext, cart, customer);
 
 		try {
-			cartService.saveCart(cart);
+			cartService.saveCart(customer, cart);
 		} catch (Exception e) {
 		}
 
 		return messages;
 	}
 
-	@SuppressWarnings("deprecation")
 	protected final List<CartItem> getCartItems(AddToCartForm productListForm) {
 		List<CartItem> cartItems = new ArrayList<CartItem>();
+		try {
+			ShopContext cmsContext = ShopContextHolder.getInstance();
+			String shopCode = cmsContext.getShopCode();
+//			Locale locale = cmsContext.getCurrentLocale();
+//			String priceGroup = cmsContext.getCurrentPriceGroup();
+//			Currency currency = Currency.getInstance(cmsContext.getCurrency());
+//			String countryOfDelivery = cmsContext.getCountryOfDelivery();
+//			Date date = new Date();
 
-		ShopContext cmsContext = ShopContextHolder.getInstance();
-		String shopCode = cmsContext.getShopCode();
-		Locale locale = cmsContext.getCurrentLocale();
-		String priceGroup = cmsContext.getCurrentPriceGroup();
-		Currency currency = Currency.getInstance(cmsContext.getCurrency());
-		String countryOfDelivery = cmsContext.getCountryOfDelivery();
-		Date date = new Date();
+			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
 
-		BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
-
-		Map<String, ProductForm> requestedProducts = new HashMap<String, ProductForm>(
-				productListForm.getProducts().size());
-		for (String key : productListForm.getProducts().keySet()) {
-			ProductForm product = productListForm.getProducts().get(key);
-			if (product.getQuantity().compareTo(0) == 1) {
-				requestedProducts.put(key, product);
+			Map<String, ProductForm> requestedProducts = new HashMap<String, ProductForm>(
+					productListForm.getProducts().size());
+			for (String key : productListForm.getProducts().keySet()) {
+				ProductForm product = productListForm.getProducts().get(key);
+				if (product.getQuantity().compareTo(0) == 1) {
+					requestedProducts.put(key, product);
+				}
 			}
+
+			List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
+					requestedProducts.keySet());
+			// List<Product> products = catalogService.findByGtin(locale,
+			// priceGroup, currency, countryOfDelivery, date,
+			// requestedProducts.keySet());
+			for (Product product : products) {
+				ProductForm productForm = requestedProducts.get(product.getGtin());
+
+				// get quantity either from global value or for individual
+				// items.
+				BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
+						: new BigDecimal(productForm.getQuantity());
+
+				CartItem cartItem = cartService.getNewCartItem(shopCode, product.getGtin(), itemCount);
+				setCartItemAttributes(cartItem, product, cmsContext);
+
+				cartItems.add(cartItem);
+			}
+
+		} catch (Exception e) {
+			log.error(ExceptionUtils.getStackTrace(e));
 		}
 
-		List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
-				requestedProducts.keySet());
-		// List<Product> products = catalogService.findByGtin(locale,
-		// priceGroup, currency, countryOfDelivery, date,
-		// requestedProducts.keySet());
-		for (Product product : products) {
-			ProductForm productForm = requestedProducts.get(product.getGtin());
-
-			// get quantity either from global value or for individual items.
-			BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
-					: new BigDecimal(productForm.getQuantity());
-
-			CartItem cartItem = cartService.getNewCartItem(product.getGtin(), itemCount);
-			setCartItemAttributes(cartItem, product, cmsContext);
+		return cartItems;
+	}
+			
 			/*
 			 * 
 			 * if (product instanceof BundleProduct) { BundleProduct bundle =
@@ -273,11 +287,7 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 			 * cartItem.setMonthlyUnitPrice(monthlyUnitPrice); }
 			 * 
 			 */
-			cartItems.add(cartItem);
-		}
 
-		return cartItems;
-	}
 
 	private void setCartItemAttributes(CartItem cartItem, Product product, ShopContext shopContext) {
 		cartItem.setBrand(product.getBrand());
@@ -285,11 +295,13 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 		// TODO change with xcart project ---
 		Price price = product.getPrice(java.util.Currency.getInstance(shopContext.getCurrentCurrency().getIsoCode()),
 				shopContext.getCurrentPriceGroup(), new Date());
-		cartItem.setUnitPrice(price.getValue("std"));
-
-		cartItem.setTitle1(translationService.getMessage("product.cart.title1", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
-		cartItem.setTitle2(translationService.getMessage("product.cart.title2", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
-		cartItem.setTitle3(translationService.getMessage("product.cart.title3", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
+		
+		cartItem.setUnitPrice(price.getCurrency(), price.getValues());
+		
+//		cartItem.setUnitPrice(price.getValues());
+//		cartItem.put("title1", translationService.getMessage("product.cart.title1", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
+//		cartItem.put("title2", translationService.getMessage("product.cart.title2", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
+//		cartItem.put("title3", translationService.getMessage("product.cart.title3", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
 	}
 
 //	protected void setCartItemAttributes(CartItem cartItem, Product product, Locale currentLocale) {

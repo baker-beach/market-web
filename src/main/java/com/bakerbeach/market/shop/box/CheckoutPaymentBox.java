@@ -44,7 +44,10 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 			ModelMap modelMap) throws ProcessableBoxException {
 		Customer customer = CustomerHelper.getCustomer();
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+		String shopCode = shopContext.getShopCode();
+		
+		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+		
 		if (request.getMethod().equals("GET")) {
 			try {
 				PaymentInfo paymentInfo = paymentService.initPayment(shopContext, customer, cart);

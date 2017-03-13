@@ -66,8 +66,11 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model)
 			throws ProcessableBoxException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
+		String shopCode = shopContext.getShopCode();
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+		
+		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+		
 		if (shopContext.getRequestData().containsKey("doOrder")) {
 			shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_SUMMARY);
 			if (checkoutStatusResolver.nextStepID(shopContext) == CheckoutStatusResolver.STEP_ORDER)
@@ -88,8 +91,11 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 
 	private void doOrder(HttpServletRequest request) throws ProcessableBoxException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
+		String shopCode = shopContext.getShopCode();
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+		
+		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+
 		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
 
 		try {
