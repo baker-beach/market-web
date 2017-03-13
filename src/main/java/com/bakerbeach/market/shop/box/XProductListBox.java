@@ -18,16 +18,15 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.ModelMap;
 
-import com.bakerbeach.market.catalog.model.CatalogSearchResult;
-import com.bakerbeach.market.catalog.model.GroupedProduct;
 import com.bakerbeach.market.cms.box.Box;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 import com.bakerbeach.market.xcatalog.model.Facets;
-import com.bakerbeach.market.xcatalog.model.SearchResult;
+import com.bakerbeach.market.xcatalog.model.Group;
 import com.bakerbeach.market.xcatalog.model.Product.Status;
+import com.bakerbeach.market.xcatalog.model.SearchResult;
 
 @Component("com.bakerbeach.market.shop.box.XProductListBox")
 @Scope("prototype")
@@ -70,14 +69,14 @@ public class XProductListBox extends AbstractXProductListBox implements Processa
 	
 	@Override
 	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
-		CatalogSearchResult catalogSearchResult = (CatalogSearchResult) modelMap.get("catalogSearchResult");
-		Collection<GroupedProduct> groupedProducts = catalogSearchResult.getProducts();
+		SearchResult catalogSearchResult = (SearchResult) modelMap.get("searchResult");
+		Collection<Group> groups = catalogSearchResult.getGroups();
 
-		for (GroupedProduct groupedProduct : groupedProducts) {
+		for (Group grouped : groups) {
 			try {
 				Box b = pageService.getBoxByType("product-list-item");
 				b.setId(UUID.randomUUID().toString());
-				b.getData().put("product", groupedProduct);
+				b.getData().put("product", grouped);
 				addChildBox("products", b);
 			} catch (Exception e) {
 				log.error(ExceptionUtils.getStackTrace(e));

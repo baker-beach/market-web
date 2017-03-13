@@ -42,7 +42,7 @@ public class TrackingBox extends AbstractBox {
 		if(order != null)
 			getData().put(ORDER, order);
 
-		ProductBox productBox = (ProductBox) modelMap.get("productBox0");
+		XProductBox productBox = (XProductBox) modelMap.get("productBox0");
 		if(productBox != null){
 			getData().put("product", productBox.getData().get("product"));
 			getData().put("deal", productBox.getData().get("deal"));

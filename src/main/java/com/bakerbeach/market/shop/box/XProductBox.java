@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.ModelMap;
 
-import com.bakerbeach.market.catalog.model.ShopProduct;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
@@ -38,7 +37,7 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 	
 	private static final String DEFAULT_PRODUCT_DETAIL_TEMPLATE = "product-detail";
 	
-	private ShopProduct product = null;
+//	private ShopProduct product = null;
 
 	@Autowired
 	@Qualifier("catalogService")
@@ -168,7 +167,7 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 		return "";
 	}
 
-	public ShopProduct getProduct() {
-		return product;
-	}
+//	public ShopProduct getProduct() {
+//		return product;
+//	}
 }
