@@ -10,7 +10,7 @@
 	<artifactId>market-web</artifactId>
 	<name>web</name>
 	<packaging>jar</packaging>
-	<version>1.1.11</version>
+	<version>1.1.12</version>
 	<properties>
 		<servlet-api.version>2.5</servlet-api.version>
 		<velocity.version>1.7</velocity.version>
@@ -24,13 +24,6 @@
 			<artifactId>market-customer</artifactId>
 			<version>[1.1.0,1.2.0)</version>
 		</dependency>
-		<dependency>
-			<groupId>com.bakerbeach.market</groupId>
-			<artifactId>market-catalog-two</artifactId>
-			<version>[0.9.0]</version>
-		</dependency>
-		<!--
-		-->
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-catalog</artifactId>
@@ -49,17 +42,17 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-shipping</artifactId>
-			<version>1.1.1</version>
+			<version>[1.1.1,1.2.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-payment</artifactId>
-			<version>[1.0.5,)</version>
+			<version>[1.0.5,1.2.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-inventory</artifactId>
-			<version>[2.1.0,)</version>
+			<version>[2.1.0,2.2.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
@@ -69,7 +62,7 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-sequence</artifactId>
-			<version>1.0.0</version>
+			<version>[1.0.0,1.1.0)</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.bakerbeach.market</groupId>
@@ -80,7 +73,7 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-newsletter</artifactId>
-			<version>1.0.0</version>
+			<version>[1.0.0,1.1.0)</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.bakerbeach.market</groupId>
@@ -91,7 +84,7 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-address</artifactId>
-			<version>1.0.0</version>
+			<version>[1.0.0,1.1.0)</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.bakerbeach.market</groupId>
@@ -102,7 +95,7 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-tax</artifactId>
-			<version>1.0.0</version>
+			<version>[1.0.0,1.1.0)</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.bakerbeach.market</groupId>
