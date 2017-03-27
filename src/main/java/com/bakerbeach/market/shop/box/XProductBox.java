@@ -28,6 +28,7 @@ import com.bakerbeach.market.translation.api.service.TranslationService;
 import com.bakerbeach.market.xcatalog.model.Group;
 import com.bakerbeach.market.xcatalog.model.Product;
 import com.bakerbeach.market.xcatalog.model.Product.Status;
+import com.bakerbeach.market.xcatalog.model.SearchResult;
 import com.bakerbeach.market.xcatalog.service.XCatalogService;
 
 @Component("com.bakerbeach.market.shop.box.XProductBox")
@@ -65,16 +66,9 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 				Date date = new Date();
 				
 				Group group = cs.groupByCode(shopCode, Status.PUBLISHED, locale, priceGroup, currency, countryOfDelivery, date, "code", code);
-				getData().put("group", group);
 
+				getData().put("group", group);
 				modelMap.addAttribute("productBox", this);
-				
-				
-//				CatalogSearchResult catalogSearchResult = catalogService.findGroupByGroupCode(locale, priceGroup,
-//						currency, countryOfDelivery, date, Arrays.asList(group));
-//				GroupedProduct product = catalogSearchResult.getProducts().iterator().next();
-//				getData().put("product", product);				
-//				modelMap.addAttribute("productBox", this);				
 			} catch (Exception e) {
 				log.warn(ExceptionUtils.getMessage(e));
 				
@@ -83,37 +77,8 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 			}
 		} else {
 			Redirect redirect = new Redirect("/", null, Redirect.RAW);
-			throw new RedirectException(redirect);
-			
+			throw new RedirectException(redirect);	
 		}
-		
-
-		
-//		if (cmsContext.getData().containsKey("primary_group")) {
-//			try {				
-//				String primaryGroup = (String) cmsContext.getData().get("primary_group");
-//				
-//				Locale locale = cmsContext.getCurrentLocale();
-//				String priceGroup = cmsContext.getCurrentPriceGroup();
-//				Currency currency = Currency.getInstance(cmsContext.getCurrency());
-//				String countryOfDelivery = cmsContext.getCountryOfDelivery();
-//				Date date = new Date();
-//				
-//				CatalogSearchResult catalogSearchResult = catalogService.findGroupByGroupCode(locale, priceGroup,
-//						currency, countryOfDelivery, date, Arrays.asList(primaryGroup));
-//				GroupedProduct product = catalogSearchResult.getProducts().iterator().next();
-//				getData().put("product", product);
-//				
-//				modelMap.addAttribute("productBox", this);				
-//			} catch (Exception e) {
-//				Redirect redirect = new Redirect("/", null, Redirect.RAW);
-//				throw new RedirectException(redirect);
-//
-//			}
-//		} else {
-//			Redirect redirect = new Redirect("/", null, Redirect.RAW);
-//			throw new RedirectException(redirect);
-//		}
 	}
 
 	@Override

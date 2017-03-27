@@ -19,7 +19,7 @@ public class CartHolder {
 	public static Cart getInstance(XCartService cartService, String shopCode, Customer customer) {
 		try {
 			Cart cart = CartHolder.getInstance();
-			if (cart == null || shopCode.equals(cart.getShopCode())) {
+			if (cart == null || !shopCode.equals(cart.getShopCode())) {
 				cart = cartService.getInstance(shopCode, customer);
 				CartHolder.setInstance(cart);
 			}

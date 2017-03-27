@@ -3,19 +3,21 @@ package com.bakerbeach.market.shop.box;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -31,6 +33,7 @@ import com.bakerbeach.market.commons.MessageImpl;
 import com.bakerbeach.market.commons.MessagesImpl;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.CartItem;
+import com.bakerbeach.market.core.api.model.CartItemQualifier;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.core.api.model.Message;
 import com.bakerbeach.market.core.api.model.Messages;
@@ -43,12 +46,14 @@ import com.bakerbeach.market.shop.service.ShopContextHolder;
 import com.bakerbeach.market.translation.api.service.TranslationService;
 import com.bakerbeach.market.xcart.api.service.XCartService;
 import com.bakerbeach.market.xcart.api.service.XCartServiceException;
+import com.bakerbeach.market.xcatalog.model.Asset;
 import com.bakerbeach.market.xcatalog.model.Price;
 import com.bakerbeach.market.xcatalog.model.Product;
+import com.bakerbeach.market.xcatalog.model.Product.Option;
 import com.bakerbeach.market.xcatalog.service.XCatalogService;
 
-@Component("com.bakerbeach.market.shop.box.XCartEditBox")
-@Scope("prototype")
+@org.springframework.stereotype.Component("com.bakerbeach.market.shop.box.XCartEditBox")
+@org.springframework.context.annotation.Scope("prototype")
 public class XCartEditBox extends AbstractBox implements ProcessableBox {
 	private static final String DEFAULT_EMPTY_CART_TMPL = "/cartEmpty";
 	private static final long serialVersionUID = 1L;
@@ -125,24 +130,25 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 		}
 	}
 
-	protected final Messages addItems(ShopContext shopContext, Collection<CartItem> cartItems)
-			throws XCartServiceException {
-		String shopCode = shopContext.getShopCode();
-
-		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
-
+	protected Messages addItems(ShopContext shopContext, Collection<CartItem> cartItems) throws XCartServiceException {
 		Messages messages = new MessagesImpl();
-
-		for (CartItem cartItem : cartItems) {
-			messages.addAll(cartService.addCartItem(shopContext, cart, cartItem));
-		}
-
-		cartService.calculate(shopContext, cart, customer);
-
+		
 		try {
+			String shopCode = shopContext.getShopCode();
+
+			Customer customer = CustomerHelper.getCustomer();
+			Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+
+
+			for (CartItem cartItem : cartItems) {
+				messages.addAll(cartService.addCartItem(shopContext, cart, cartItem));
+			}
+
+			cartService.calculate(shopContext, cart, customer);
 			cartService.saveCart(customer, cart);
 		} catch (Exception e) {
+			log.error(ExceptionUtils.getStackTrace(e));
+			messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "addItems.error"));			
 		}
 
 		return messages;
@@ -178,11 +184,11 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 		try {
 			ShopContext cmsContext = ShopContextHolder.getInstance();
 			String shopCode = cmsContext.getShopCode();
-//			Locale locale = cmsContext.getCurrentLocale();
-//			String priceGroup = cmsContext.getCurrentPriceGroup();
-//			Currency currency = Currency.getInstance(cmsContext.getCurrency());
-//			String countryOfDelivery = cmsContext.getCountryOfDelivery();
-//			Date date = new Date();
+			// Locale locale = cmsContext.getCurrentLocale();
+			String priceGroup = cmsContext.getCurrentPriceGroup();
+			Currency currency = Currency.getInstance(cmsContext.getCurrency());
+			// String countryOfDelivery = cmsContext.getCountryOfDelivery();
+			Date date = new Date();
 
 			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
 
@@ -190,26 +196,61 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 					productListForm.getProducts().size());
 			for (String key : productListForm.getProducts().keySet()) {
 				ProductForm product = productListForm.getProducts().get(key);
-				if (product.getQuantity().compareTo(0) == 1) {
+				if (product.getQuantity().compareTo(BigDecimal.ZERO) == 1) {
 					requestedProducts.put(key, product);
 				}
 			}
 
 			List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
 					requestedProducts.keySet());
-			// List<Product> products = catalogService.findByGtin(locale,
-			// priceGroup, currency, countryOfDelivery, date,
-			// requestedProducts.keySet());
 			for (Product product : products) {
 				ProductForm productForm = requestedProducts.get(product.getGtin());
 
 				// get quantity either from global value or for individual
 				// items.
 				BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
-						: new BigDecimal(productForm.getQuantity());
+						: productForm.getQuantity();
 
-				CartItem cartItem = cartService.getNewCartItem(shopCode, product.getGtin(), itemCount);
+				CartItem cartItem = cartService.getNewCartItem(shopCode, product.getCode(), itemCount);
 				setCartItemAttributes(cartItem, product, cmsContext);
+
+				for (Option po : product.getOptions().values()) {
+					BigDecimal quantity = BigDecimal.ZERO;
+					if (productForm.getOptions().containsKey(po.getCode())) {
+						quantity = productForm.getOption(po.getCode()).getQuantity();
+					} else if (po.isRequired()) {
+						if (StringUtils.isNotEmpty(po.getComponentCode())) {
+							if (product.getComponents().containsKey(po.getComponentCode())) {
+								if (product.getComponent(po.getComponentCode()).isRequired()) {
+									quantity = po.getDefaultQty();
+								}
+							}
+						} else {
+							quantity = po.getDefaultQty();
+						}
+					}
+
+					if (quantity.compareTo(BigDecimal.ZERO) == 1) {
+						CartItem.Option cio = cartItem.newOption(po.getCode(), null);
+						cio.setGtin(po.getGtin());
+						cio.setQuantity(quantity);
+
+						Price price = po.getPrice(currency, priceGroup, date);
+						if (price != null) {
+							BigDecimal optionPrice = price.getValue();
+							cio.setUnitPrice("std", price.getValue());
+							cio.multiplyUnitPrices(cio.getQuantity());
+						}
+					}
+				}
+
+				// cart item price ---
+				// TODO: change price model in product to tagged prices
+				Price productPrice = product.getPrice(currency, priceGroup, date);
+				cartItem.setUnitPrice("std", productPrice.getValue());
+				cartItem.getOptions().forEach((k, o) -> {
+					cartItem.addUnitPrices(o.getUnitPrices());
+				});
 
 				cartItems.add(cartItem);
 			}
@@ -220,155 +261,36 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 
 		return cartItems;
 	}
-			
-			/*
-			 * 
-			 * if (product instanceof BundleProduct) { BundleProduct bundle =
-			 * (BundleProduct) product; for (BundleComponent component :
-			 * bundle.getComponents()) { String componentName =
-			 * component.getName();
-			 * 
-			 * if (component.isRequired()) { CartItemComponent cartItemComponent
-			 * = cartService.getNewCartItemComponent(componentName);
-			 * cartItem.getComponents().put(componentName, cartItemComponent);
-			 * 
-			 * for (BundleOption option : component.getOptions()) { String
-			 * optionCode = option.getGtin();
-			 * 
-			 * if (option.isRequired()) { CartItemOption cartItemOption =
-			 * cartService.getNewCartItemOption(optionCode);
-			 * cartItemComponent.getOptions().put(optionCode, cartItemOption);
-			 * setOptionAttributes(cartItemOption, option,
-			 * option.getDefaultQty(), cmsContext.getCurrentLocale()); } } }
-			 * 
-			 * if (productForm.getComponents().containsKey(componentName)) {
-			 * BundleComponentForm componentForm =
-			 * productForm.getComponents().get(componentName);
-			 * 
-			 * for (BundleOption option : component.getOptions()) { String
-			 * optionCode = option.getGtin();
-			 * 
-			 * BundleOptionForm optionForm =
-			 * componentForm.getOptions().get(optionCode); if (optionForm !=
-			 * null && optionForm.getQuantity() > 0) { Integer quantity =
-			 * option.getDefaultQty(); if (optionForm.getQuantity() != null &&
-			 * optionForm.getQuantity() >= option.getMinQty() &&
-			 * optionForm.getQuantity() <= option.getMaxQty()) { quantity =
-			 * optionForm.getQuantity(); } if (quantity > 0) { if
-			 * (!cartItem.getComponents().containsKey(componentName)) {
-			 * cartItem.getComponents().put(component.getName(),
-			 * cartService.getNewCartItemComponent(componentName)); }
-			 * 
-			 * CartItemComponent cartItemComponent = cartItem.getComponents()
-			 * .get(component.getName());
-			 * 
-			 * if (!cartItemComponent.getOptions().containsKey(optionCode)) {
-			 * cartItemComponent.getOptions().put(option.getGtin(),
-			 * cartService.getNewCartItemOption(optionCode)); }
-			 * 
-			 * CartItemOption cartItemOption =
-			 * cartItemComponent.getOptions().get(optionCode);
-			 * 
-			 * setOptionAttributes(cartItemOption, option, quantity,
-			 * cmsContext.getCurrentLocale()); } } } } }
-			 * 
-			 * BigDecimal unitPrice = product.getPrice(); BigDecimal
-			 * monthlyUnitPrice = product.getMonthlyPrice(); if
-			 * (monthlyUnitPrice == null) monthlyUnitPrice = BigDecimal.ZERO;
-			 * for (CartItemComponent component :
-			 * cartItem.getComponents().values()) { for (CartItemOption option :
-			 * component.getOptions().values()) { unitPrice =
-			 * unitPrice.add(option.getUnitPrice().multiply(new
-			 * BigDecimal(option.getQuantity()))); if
-			 * (option.getMonthlyUnitPrice() != null) { monthlyUnitPrice =
-			 * monthlyUnitPrice.add(option.getMonthlyUnitPrice().multiply(new
-			 * BigDecimal(option.getQuantity()))); } } }
-			 * cartItem.setUnitPrice(unitPrice);
-			 * cartItem.setMonthlyUnitPrice(monthlyUnitPrice); }
-			 * 
-			 */
 
+	protected void setCartItemAttributes(CartItem cartItem, Product product, ShopContext shopContext) {
+		if (Product.Type.VPRODUCT.equals(product.getType())) {
+			cartItem.setQualifier(CartItemQualifier.VPRODUCT);
+		} else {
+			cartItem.setQualifier(CartItemQualifier.PRODUCT);
+		}
 
-	private void setCartItemAttributes(CartItem cartItem, Product product, ShopContext shopContext) {
 		cartItem.setBrand(product.getBrand());
 		cartItem.setTaxCode(product.getTaxCode());
-		// TODO change with xcart project ---
+
+		// TODO change price object structure ---
 		Price price = product.getPrice(java.util.Currency.getInstance(shopContext.getCurrentCurrency().getIsoCode()),
 				shopContext.getCurrentPriceGroup(), new Date());
-		
-		cartItem.setUnitPrice(price.getCurrency(), price.getValues());
-		
-//		cartItem.setUnitPrice(price.getValues());
-//		cartItem.put("title1", translationService.getMessage("product.cart.title1", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
-//		cartItem.put("title2", translationService.getMessage("product.cart.title2", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
-//		cartItem.put("title3", translationService.getMessage("product.cart.title3", "text", product.getGtin(), null, null, shopContext.getCurrentLocale()));
+
+		cartItem.setUnitPrice("std", price.getValue());
+
+		cartItem.getTitle().put("title1", translationService.getMessage("product.cart.title1", "text",
+				product.getGtin(), null, null, shopContext.getCurrentLocale()));
+		cartItem.getTitle().put("title2", translationService.getMessage("product.cart.title2", "text",
+				product.getGtin(), null, null, shopContext.getCurrentLocale()));
+		cartItem.getTitle().put("title3", translationService.getMessage("product.cart.title3", "text",
+				product.getGtin(), null, null, shopContext.getCurrentLocale()));
+
+		List<Asset> assets = product.getAssets("listing", "s");
+		if (CollectionUtils.isNotEmpty(assets)) {
+			cartItem.getImages().put("img1", assets.get(0).getPath());
+		}
+
 	}
-
-//	protected void setCartItemAttributes(CartItem cartItem, Product product, Locale currentLocale) {
-//		cartItem.setBrand(product.getBrand());
-//		cartItem.setTaxCode(product.getTaxCode());
-//		cartItem.setUnitPrice(product.getPrice());
-//		cartItem.setUnitPrices(product.getPrices());
-//		cartItem.setMonthlyUnitPrice(product.getMonthlyPrice());
-//		
-//		cartItem.setTitle1(translationService.getMessage("product.cart.title1", "text", product.getGtin(), null, null, locale));
-//		cartItem.setTitle2(translationService.getMessage("product.cart.title2", "text", product.getGtin(), null, null, locale));
-//		cartItem.setTitle3(translationService.getMessage("product.cart.title3", "text", product.getGtin(), null, null, locale));
-//		
-//		cartItem.setSize(translationService.getMessage("size", "text", product.getSize(), null, null, locale));
-//		cartItem.setColor(translationService.getMessage("color", "text", product.getColor(), null, null, locale));
-//		
-//		Asset asset1 = product.getAsset("listing", 0, "m");
-//		if (asset1 != null) {
-//			cartItem.setImageUrl1(asset1.getPath());			
-//		}		
-//	}
-
-	// protected void setCartItemAttributes(CartItem cartItem, Product product,
-	// Locale locale) {
-	// cartItem.setBrand(product.getBrand());
-	// cartItem.setTaxCode(product.getTaxCode());
-	// cartItem.setUnitPrice(product.getPrice());
-	// cartItem.setUnitPrices(product.getPrices());
-	// cartItem.setMonthlyUnitPrice(product.getMonthlyPrice());
-	//
-	// cartItem.setTitle1(translationService.getMessage("product.cart.title1",
-	// "text", product.getGtin(), null, null, locale));
-	// cartItem.setTitle2(translationService.getMessage("product.cart.title2",
-	// "text", product.getGtin(), null, null, locale));
-	// cartItem.setTitle3(translationService.getMessage("product.cart.title3",
-	// "text", product.getGtin(), null, null, locale));
-	//
-	// cartItem.setSize(translationService.getMessage("size", "text",
-	// product.getSize(), null, null, locale));
-	// cartItem.setColor(translationService.getMessage("color", "text",
-	// product.getColor(), null, null, locale));
-	//
-	// Asset asset1 = product.getAsset("listing", 0, "m");
-	// if (asset1 != null) {
-	// cartItem.setImageUrl1(asset1.getPath());
-	// }
-	// }
-
-	// protected void setOptionAttributes(CartItemOption cartItemOption,
-	// BundleOption option, Integer quantity, Locale locale) {
-	// cartItemOption.setQuantity(quantity);
-	// cartItemOption.setUnitPrice(option.getPrice());
-	// cartItemOption.setUnitPrices(option.getPrices());
-	// cartItemOption.setMonthlyUnitPrice(option.getMonthlyPrice());
-	// String optionTitle1 = translationService.getMessage("option.title1",
-	// "text", option.getGtin(), null,
-	// option.getGtin(), locale);
-	// cartItemOption.setTitle1(optionTitle1);
-	// String optionTitle2 = translationService.getMessage("option.title2",
-	// "text", option.getGtin(), null,
-	// option.getGtin(), locale);
-	// cartItemOption.setTitle2(optionTitle2);
-	// String optionTitle3 = translationService.getMessage("option.title3",
-	// "text", option.getGtin(), null,
-	// option.getGtin(), locale);
-	// cartItemOption.setTitle3(optionTitle3);
-	// }
 
 	public static class QuantityUpdateCartForm {
 		private Map<String, CartItemForm> items = new HashMap<String, CartItemForm>();
@@ -426,8 +348,8 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 
 		public static class ProductForm {
 			private String gtin;
-			private Integer quantity = 1;
-			private Map<String, BundleComponentForm> components = new HashMap<String, BundleComponentForm>();
+			private BigDecimal quantity = BigDecimal.ONE;
+			private Map<String, OptionForm> options = new LinkedHashMap<>();
 
 			public ProductForm() {
 			}
@@ -444,95 +366,55 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 				this.gtin = gtin;
 			}
 
-			public Integer getQuantity() {
+			public BigDecimal getQuantity() {
 				return quantity;
 			}
 
-			public void setQuantity(Integer quantity) {
+			public void setQuantity(BigDecimal quantity) {
 				this.quantity = quantity;
 			}
 
-			public Map<String, BundleComponentForm> getComponents() {
-				return components;
-			}
-
-			public BundleComponentForm getComponent(String name) {
-				if (name != null) {
-					for (BundleComponentForm item : components.values()) {
-						if (name.equals(item.getName())) {
-							return item;
-						}
-					}
-				}
-				return null;
-			}
-
-			public void setComponents(Map<String, BundleComponentForm> components) {
-				this.components = components;
-			}
-
-		}
-
-		public static class BundleComponentForm {
-			private String name;
-			private Map<String, BundleOptionForm> options = new HashMap<String, BundleOptionForm>();
-
-			public BundleComponentForm() {
-			}
-
-			public BundleComponentForm(String name) {
-				setName(name);
-			}
-
-			public String getName() {
-				return name;
-			}
-
-			public void setName(String name) {
-				this.name = name;
-			}
-
-			public Map<String, BundleOptionForm> getOptions() {
+			public Map<String, OptionForm> getOptions() {
 				return options;
 			}
 
-			public void setOptions(Map<String, BundleOptionForm> options) {
-				this.options = options;
+			public OptionForm getOption(String code) {
+				return StringUtils.isNotEmpty(code) ? options.get(code) : null;
 			}
 
-			public void setOption(String gtin) {
-				BundleOptionForm option = new BundleOptionForm(gtin);
-				options.put(gtin, option);
+			public void setOptions(Map<String, OptionForm> options) {
+				this.options = options;
 			}
 
 		}
 
-		public static class BundleOptionForm {
-			private String gtin;
-			private Integer quantity = 1;
+		public static class OptionForm {
+			private String code;
+			private BigDecimal quantity = BigDecimal.ONE;
 
-			public BundleOptionForm() {
+			public OptionForm() {
 			}
 
-			public BundleOptionForm(String gtin) {
-				this.gtin = gtin;
+			public OptionForm(String gtin) {
+				this.code = gtin;
 			}
 
-			public String getGtin() {
-				return gtin;
+			public String getCode() {
+				return code;
 			}
 
-			public void setGtin(String gtin) {
-				this.gtin = gtin;
+			public void setCode(String code) {
+				this.code = code;
 			}
 
-			public Integer getQuantity() {
+			public BigDecimal getQuantity() {
 				return quantity;
 			}
 
-			public void setQuantity(Integer quantity) {
+			public void setQuantity(BigDecimal quantity) {
 				this.quantity = quantity;
 			}
+
 		}
 	}
 
