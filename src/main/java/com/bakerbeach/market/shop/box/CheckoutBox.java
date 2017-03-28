@@ -105,7 +105,7 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 			throw new RedirectException(new Redirect(pre.getUrl(), null, Redirect.RAW));
 
 		} catch (PaymentServiceException pe) {
-
+			throw new RedirectException(new Redirect("checkout-summary", null));
 		}
  
 		try {

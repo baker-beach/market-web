@@ -26,6 +26,9 @@ public abstract class AbstractCheckoutStepBox extends AbstractBox implements Pro
 
 	public final void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) throws ProcessableBoxException {
 		ShopContext cmsContext = ShopContextHolder.getInstance();
+		
+		if(getStep() > 4)
+			cmsContext.getValidSteps().remove(CheckoutStatusResolver.STEP_SUMMARY);
 
 		if (checkoutStatusResolver.isStepvalid(cmsContext, getStep())) {
 			handleActionRequestForward(request, response, modelMap);
