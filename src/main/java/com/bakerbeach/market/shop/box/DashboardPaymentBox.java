@@ -27,6 +27,7 @@ public class DashboardPaymentBox extends AbstractBox {
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		PaymentInfo paymentInfo = paymentService.getPaymentInfo(shopContext);
 		getData().put("payment_info", paymentInfo.getPaymentDataMap().get(paymentInfo.getCurrentPaymentMethodCode()));	
+		modelMap.put("payment_info", paymentInfo.getPaymentDataMap().get(paymentInfo.getCurrentPaymentMethodCode()));
 	}
 	
 	

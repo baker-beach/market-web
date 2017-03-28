@@ -57,6 +57,8 @@ public class CheckoutReturnPaymentBox extends AbstractBox implements Processable
 
 		if (shopContext.getRequestData().containsKey("redirect"))
 			throw new RedirectException(new Redirect((String) shopContext.getRequestData().get("redirect"), null));
+		else if (shopContext.getRequestData().containsKey("iframe_redirect"))
+			shopContext.getRequestData().put("page_id", (String) shopContext.getRequestData().get("iframe_redirect"));
 		else
 			throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
 
