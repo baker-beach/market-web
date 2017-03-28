@@ -279,11 +279,11 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 		cartItem.setUnitPrice("std", price.getValue());
 
 		cartItem.getTitle().put("title1", translationService.getMessage("product.cart.title1", "text",
-				product.getGtin(), null, null, shopContext.getCurrentLocale()));
+				product.getGtin(), null, "product.cart.title1", shopContext.getCurrentLocale()));
 		cartItem.getTitle().put("title2", translationService.getMessage("product.cart.title2", "text",
-				product.getGtin(), null, null, shopContext.getCurrentLocale()));
+				product.getGtin(), null, "product.cart.title2", shopContext.getCurrentLocale()));
 		cartItem.getTitle().put("title3", translationService.getMessage("product.cart.title3", "text",
-				product.getGtin(), null, null, shopContext.getCurrentLocale()));
+				product.getGtin(), null, "product.cart.title3", shopContext.getCurrentLocale()));
 
 		List<Asset> assets = product.getAssets("listing", "s");
 		if (CollectionUtils.isNotEmpty(assets)) {
