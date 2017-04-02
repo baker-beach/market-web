@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -38,6 +39,7 @@ import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 import com.bakerbeach.market.xcart.api.service.XCartService;
+import com.bakerbeach.market.xcart.api.service.XCartServiceException;
 
 @Component("com.bakerbeach.market.shop.box.CheckoutBox")
 @Scope("prototype")
@@ -114,8 +116,15 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 			Redirect redirect = new Redirect(getNextCheckoutStep(shopContext, cart), null);
 			shopContext.setOrderId(null);
 			shopContext.getValidSteps().clear();
-			cartService.clear(cart);
 			
+			try {
+				cartService.setStatus(customer, cart, "ORDERED");
+				cartService.saveCart(customer, cart);
+				CartHolder.setInstance(null);
+			} catch (XCartServiceException e) {
+				log.error(ExceptionUtils.getStackTrace(e));
+			}
+						
 			flashMap.put("order", order);
 
 			throw new RedirectException(redirect);
