@@ -44,6 +44,7 @@ public abstract class AbstractLoginBox extends AbstractBox implements Processabl
 					cartService.merge(cart, lastActiveCart);
 					CartHolder.setInstance(lastActiveCart);
 					cartService.saveCart(customer, lastActiveCart);
+					cartService.calculate(shopContext, lastActiveCart, customer);
 				} else {
 					cart.setCustomerId(customer.getId());
 					cartService.saveCart(customer, cart);

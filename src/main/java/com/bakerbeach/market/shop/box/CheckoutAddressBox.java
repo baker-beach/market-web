@@ -27,6 +27,7 @@ import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.cms.box.RedirectException;
 import com.bakerbeach.market.cms.model.Redirect;
 import com.bakerbeach.market.commons.FieldMessageImpl;
+import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.core.api.model.CustomerAddress;
 import com.bakerbeach.market.core.api.model.Message;
@@ -35,15 +36,20 @@ import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.model.ShopCustomerAddress;
 import com.bakerbeach.market.shop.model.forms.AddressForm;
 import com.bakerbeach.market.shop.model.forms.AddressForm.AddressFormAddress;
+import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
+import com.bakerbeach.market.xcart.api.service.XCartService;
 
 @Component("com.bakerbeach.market.shop.box.CheckoutAddressBox")
 @Scope("prototype")
 public class CheckoutAddressBox extends AbstractCheckoutStepBox{
 	private static final long serialVersionUID = 1L;
 	
+	@Autowired
+	private XCartService cartService;
+
 	private static String nl = "DR:Drenthe;FL:Flevoland;FR:Friesland;GE:Gelderland;GR:Groningen;LI:Limburg;NB:Noord-Brabant;NH:Noord-Holland;OV:Overijssel;UT:Utrecht;ZE:Zeeland;ZH:Zuid-Holland";
 	private static String it = "AG:Agrigento;AL:Alessandria;AN:Ancona;AO:Aosta;AR:Arezzo;AP:Ascoli Piceno;AT:Asti;AV:Avellino;BA:Bari;BL:Belluno;BN:Benevento;BG:Bergamo;BI:Biella;BO:Bologna;BZ:Bolzano;BS:Brescia;BR:Brindisi;CA:Cagliari;CL:Caltanissetta;CB:Campobasso;CE:Caserta;CT:Catania;CZ:Catanzaro;CH:Chieti;CO:Como;CS:Cosenza;CR:Cremona;KR:Crotone;CN:Cuneo;EN:Enna;FE:Ferrara;FI:Firenze;FG:Foggia;FO:Forli-Cesena;FR:Frosinone;GE:Genova;GO:Gorizia;GR:Grosseto;IM:Imperia;IS:Isernia;SP:La Spezia;AQ:L’Aquila;LT:Latina;LE:Lecce;LC:Lecco;LI:Livorno;LO:Lodi;LU:Lucca;MC:Macerata;MN:Mantova;MS:Massa-Carrara;MT:Matera;ME:Messina;MI:Milano;MO:Modena;MB:Monza e Brianza;NA:Napoli;NO:Novara;NU:Nuoro;OR:Oristano;PD:Padova;PA:Palermo;PR:Parma;PV:Pavia;PG:Perugia;PS:Pesaro;PE:Pescara;PC:Piacenza;PI:Pisa;PT:Pistoia;PN:Pordenone;PZ:Potenza;PO:Prato;RG:Ragusa;RA:Ravenna;RC:Reggio Calabria;RE:Reggio Emilia;RI:Rieti;RN:Rimini;RM:Roma;RO:Rovigo;SA:Salerno;SS:Sassari;SV:Savona;SI:Siena;SR:Siracusa;SO:Sondrio;TA:Taranto;TE:Teramo;TR:Terni;TO:Torino;TP:Trapani;TN:Trento;TV:Treviso;TS:Trieste;UD:Udine;VA:Varese;VE:Venezia;VB:Verbania-Cusio-Ossola;VC:Vercelli;VR:Verona;VV:Vibo Valentia;VI:Vicenza;VT:Viterbo";
 	private static String ca = "AB:Alberta;BC:British Columbia;MB:Manitoba;NB:New Brunswick;NL:Newfoundland;NT:Northwest Territories;NS:Nova Scotia;NU:Nunavut;ON:Ontario;PE:Prince Edward Island;QC:Quebec;SK:Saskatchewan;YT:Yukon";
@@ -112,6 +118,10 @@ public class CheckoutAddressBox extends AbstractCheckoutStepBox{
 		shopContext.setBillingAddress(billingAddress);
 		shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_ADDRESS);
 		
+		Customer customer = CustomerHelper.getCustomer();
+		Cart cart = CartHolder.getInstance(cartService, shopContext.getShopCode(), customer);
+		cartService.calculate(shopContext, cart, customer);
+
 		return new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null);
 	}
 	
@@ -220,6 +230,7 @@ public class CheckoutAddressBox extends AbstractCheckoutStepBox{
 					try {
 						addressService.saveOrUpdate(shippingAddress);
 						addressService.saveOrUpdate(billingAddress);						
+						
 						throw new RedirectException(handleSuccess(model, billingAddress, shippingAddress));
 					} catch (RedirectException e) {
 						throw e;
@@ -227,7 +238,7 @@ public class CheckoutAddressBox extends AbstractCheckoutStepBox{
 						log.error(ExceptionUtils.getStackTrace(e));
 					}
 				}
-				
+
 				throw new RedirectException(handleError(request, response, addressForm, messages));
 				
 				/*
