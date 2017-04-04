@@ -88,7 +88,7 @@ public class RegistrationBox extends AbstractLoginBox {
 				try {
 					customer = customerService.register(
 							registerForm.getRegisterEmail(), registerForm.getRegisterPassword(),
-							shopContext.getShopCode());
+							shopContext.getRegistrationShopCode());
 
 					if (!StringUtils.isEmpty(registerForm.getRegisterFirstName()))
 						customer.setFirstName(registerForm.getRegisterFirstName());
