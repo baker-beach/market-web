@@ -40,6 +40,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	private String helperClass = ShopHelper.class.getName();
 
 	private String shopCode;
+	private List<String> registrationShopCode;
 	private String shopType;
 	private String cartCode;
 	private String assortmentCode;
@@ -99,8 +100,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 		setNewsletterIds(definition.getNewsletterIds());
 		setGtmId(definition.getGtmId());
 		setShopType(definition.getShopType());
-
-
+		setRegistrationShopCode(definition.getRegistrationShopCode());
 	}
 
 	@Override
@@ -133,7 +133,22 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public void setShopCode(String shopCode) {
 		this.shopCode = shopCode;
 	}
+	
+	@Override
+	public List<String> getRegistrationShopCode() {
+		return registrationShopCode;
+	}
+	
+	@Override
+	public void setRegistrationShopCode(List<String> registrationShopCode) {
+		this.registrationShopCode = registrationShopCode;
+	}
 
+	@Override
+	public void setRegistrationShopCodeString(String registrationShopCodeString) {
+		this.registrationShopCode = Arrays.asList(registrationShopCodeString.split(","));
+	}
+	
 	@Override
 	public String getHost() {
 		return host;
