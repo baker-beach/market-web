@@ -598,9 +598,9 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	@Override
 	public String getApplicationPath() {
-		StringBuilder path = new StringBuilder(protocol.toLowerCase());
+		StringBuilder path = new StringBuilder(this.getHttpServletRequest().isSecure() ? "https" : "http");
 		try {
-			path.append("://").append(host).append(":").append(port)
+			path.append("://").append(host).append(":").append(("http".equals(protocol)) ? this.getPort() : this.getSecurePort())
 					.append(UrlHelper.getContextPath(httpServletRequest, httpServletRequest.getCharacterEncoding()));
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
