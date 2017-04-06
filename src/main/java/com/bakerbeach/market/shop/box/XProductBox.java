@@ -35,10 +35,10 @@ import com.bakerbeach.market.xcatalog.service.XCatalogService;
 @Scope("prototype")
 public class XProductBox extends AbstractBox implements ProcessableBox {
 	private static final long serialVersionUID = 1L;
-	
+
 	private static final String DEFAULT_PRODUCT_DETAIL_TEMPLATE = "product-detail";
-	
-//	private ShopProduct product = null;
+
+	// private ShopProduct product = null;
 
 	@Autowired
 	@Qualifier("catalogService")
@@ -49,10 +49,11 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 
 	@Autowired
 	protected TranslationService translationService;
-	
+
 	@SuppressWarnings("deprecation")
 	@Override
-	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) throws ProcessableBoxException{
+	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap)
+			throws ProcessableBoxException {
 		ShopContext context = ShopContextHolder.getInstance();
 
 		String code = getCode(context);
@@ -64,39 +65,40 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 				String countryOfDelivery = context.getCountryOfDelivery();
 				String shopCode = context.getShopCode();
 				Date date = new Date();
-				
-				Group group = cs.groupByCode(shopCode, Status.PUBLISHED, locale, priceGroup, currency, countryOfDelivery, date, "code", code);
+
+				Group group = cs.groupByCode(shopCode, Status.PUBLISHED, locale, priceGroup, currency,
+						countryOfDelivery, date, "code", code);
 
 				getData().put("group", group);
 				modelMap.addAttribute("productBox", this);
 			} catch (Exception e) {
 				log.warn(ExceptionUtils.getMessage(e));
-				
+
 				Redirect redirect = new Redirect("/", null, Redirect.RAW);
 				throw new RedirectException(redirect);
 			}
 		} else {
 			Redirect redirect = new Redirect("/", null, Redirect.RAW);
-			throw new RedirectException(redirect);	
+			throw new RedirectException(redirect);
 		}
 	}
 
 	@Override
-	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {		
+	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
 		Map<String, Object> data = getData();
 		if (data.containsKey("group")) {
 			try {
 				Group group = (Group) getData().get("group");
-				
+
 				String template = group.getTemplate();
 				if (StringUtils.isNotBlank(template)) {
 					getData().put("template", template);
 				} else {
 					getData().put("template", DEFAULT_PRODUCT_DETAIL_TEMPLATE);
 				}
-				
+
 				setActiveMember(request, group, modelMap);
-				
+
 			} catch (Exception e) {
 				log.error(ExceptionUtils.getStackTrace(e));
 			}
@@ -126,13 +128,13 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 			getData().put("active", code);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return "";
 	}
 
-//	public ShopProduct getProduct() {
-//		return product;
-//	}
+	// public ShopProduct getProduct() {
+	// return product;
+	// }
 }

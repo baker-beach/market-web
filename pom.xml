@@ -38,18 +38,18 @@
 		-->
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
-			<artifactId>market-translation</artifactId>
+			<artifactId>market-translation-api</artifactId>
 			<version>[1.0.0,1.1.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
-			<artifactId>market-xcart</artifactId>
+			<artifactId>market-xcart-api</artifactId>
 			<version>[0.9.0-SNAPSHOT]</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
-			<artifactId>market-shipping</artifactId>
-			<version>[1.1.1,1.2.0)</version>
+			<artifactId>market-shipping-api</artifactId>
+			<version>[1.0.0,1.1.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
@@ -58,7 +58,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
-			<artifactId>market-inventory</artifactId>
+			<artifactId>market-inventory-api</artifactId>
 			<version>[2.1.0,2.2.0)</version>
 		</dependency>
 		<dependency>
@@ -68,7 +68,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
-			<artifactId>market-sequence</artifactId>
+			<artifactId>market-sequence-api</artifactId>
 			<version>[1.0.0,1.1.0)</version>
 		</dependency>
 		<dependency>
@@ -78,7 +78,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
-			<artifactId>market-address</artifactId>
+			<artifactId>market-address-api</artifactId>
 			<version>[1.0.0,1.1.0)</version>
 		</dependency>
 		<dependency>

@@ -184,10 +184,8 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 		try {
 			ShopContext cmsContext = ShopContextHolder.getInstance();
 			String shopCode = cmsContext.getShopCode();
-			// Locale locale = cmsContext.getCurrentLocale();
 			String priceGroup = cmsContext.getCurrentPriceGroup();
 			Currency currency = Currency.getInstance(cmsContext.getCurrency());
-			// String countryOfDelivery = cmsContext.getCountryOfDelivery();
 			Date date = new Date();
 
 			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());

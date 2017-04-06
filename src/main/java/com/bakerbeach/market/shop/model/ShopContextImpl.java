@@ -702,5 +702,5 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public void setCurrencies(Map<String, Currency> currencies) {
 		this.currencies = currencies;
 	}
-
+	
 }
