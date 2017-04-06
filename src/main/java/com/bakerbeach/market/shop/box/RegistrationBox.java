@@ -1,5 +1,9 @@
 package com.bakerbeach.market.shop.box;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -86,9 +90,14 @@ public class RegistrationBox extends AbstractLoginBox {
 				}
 				
 				try {
-					customer = customerService.register(
-							registerForm.getRegisterEmail(), registerForm.getRegisterPassword(),
-							shopContext.getRegistrationShopCode());
+					List<String> shopCodesOnRegistration = new ArrayList<>();
+					shopCodesOnRegistration.add(shopContext.getShopCode());
+					if (StringUtils.isNotEmpty(shopContext.getBigGroupCode()) && shopContext.getUseBigGroupCode()) {
+						shopCodesOnRegistration.add(shopContext.getBigGroupCode());
+					}
+
+					customer = customerService.register(registerForm.getRegisterEmail(),
+							registerForm.getRegisterPassword(), shopCodesOnRegistration);
 
 					if (!StringUtils.isEmpty(registerForm.getRegisterFirstName()))
 						customer.setFirstName(registerForm.getRegisterFirstName());

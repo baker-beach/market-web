@@ -38,8 +38,11 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	private ModelMap modelMap;
 
 	private String helperClass = ShopHelper.class.getName();
-
 	private String shopCode;
+	private String bigGroupCode;
+	private Boolean useBigGroupCode = true;
+	private String orderSequenceCode;
+	private Long orderSequenceRandomOffset = 1l;
 	private List<String> registrationShopCode;
 	private String shopType;
 	private String cartCode;
@@ -86,6 +89,10 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	public ShopContextImpl(ShopContext definition) {
 		setShopCode(definition.getShopCode());
+		setBigGroupCode(definition.getBigGroupCode());
+		setUseBigGroupCode(definition.getUseBigGroupCode());
+		setOrderSequenceCode(definition.getOrderSequenceCode());
+		setOrderSequenceRandomOffset(definition.getOrderSequenceRandomOffset());
 		setAssortmentCode(definition.getAssortmentCode());
 		setHost(definition.getHost());
 		setPort(definition.getPort());
@@ -133,12 +140,52 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public void setShopCode(String shopCode) {
 		this.shopCode = shopCode;
 	}
+
+	@Override
+	public String getBigGroupCode() {
+		return bigGroupCode;
+	}
 	
+	@Override
+	public Boolean getUseBigGroupCode() {
+		return useBigGroupCode;
+	}
+	
+	@Override
+	public void setUseBigGroupCode(Boolean useBigGroupCode) {
+		this.useBigGroupCode = useBigGroupCode;
+	}
+
+	@Override
+	public String getOrderSequenceCode() {
+		return orderSequenceCode;
+	}
+
+	@Override
+	public void setOrderSequenceCode(String orderSequenceCode) {
+		this.orderSequenceCode = orderSequenceCode;
+	}
+
+	@Override
+	public Long getOrderSequenceRandomOffset() {
+		return orderSequenceRandomOffset;
+	}
+
+	@Override
+	public void setOrderSequenceRandomOffset(Long orderSequenceRandomOffset) {
+		this.orderSequenceRandomOffset = orderSequenceRandomOffset;
+	}
+
+	@Override
+	public void setBigGroupCode(String bigGroupCode) {
+		this.bigGroupCode = bigGroupCode;
+	}
+
 	@Override
 	public List<String> getRegistrationShopCode() {
 		return registrationShopCode;
 	}
-	
+
 	@Override
 	public void setRegistrationShopCode(List<String> registrationShopCode) {
 		this.registrationShopCode = registrationShopCode;
@@ -148,7 +195,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public void setRegistrationShopCodeString(String registrationShopCodeString) {
 		this.registrationShopCode = Arrays.asList(registrationShopCodeString.split(","));
 	}
-	
+
 	@Override
 	public String getHost() {
 		return host;
@@ -252,7 +299,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public void setCartCode(String cartCode) {
 		this.cartCode = cartCode;
 	}
-	
+
 	@Override
 	public List<Locale> getLocales() {
 		return locales;
@@ -601,7 +648,8 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 		String p = this.getHttpServletRequest().isSecure() ? "https" : "http";
 		StringBuilder path = new StringBuilder(p);
 		try {
-			path.append("://").append(host).append(":").append(("http".equals(p)) ? this.getPort() : this.getSecurePort())
+			path.append("://").append(host).append(":")
+					.append(("http".equals(p)) ? this.getPort() : this.getSecurePort())
 					.append(UrlHelper.getContextPath(httpServletRequest, httpServletRequest.getCharacterEncoding()));
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
@@ -617,7 +665,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 			return currencies.get(defaultCurrency);
 
 	}
-	
+
 	@Override
 	public void setCurrency(String currency) {
 		if (currencies.containsKey(currency))
@@ -628,7 +676,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public String getCurrency() {
 		return getCurrentCurrency().getIsoCode();
 	}
-	
+
 	@Override
 	public Boolean isCurrencySymbolAtFront() {
 		return getCurrentCurrency().isCurrencySymbolAtFront();
@@ -638,7 +686,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public String getCurrencySymbol() {
 		return getCurrentCurrency().getSymbol();
 	}
-	
+
 	public String getDefaultCurrency() {
 		return defaultCurrency;
 	}
