@@ -39,11 +39,9 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	private String helperClass = ShopHelper.class.getName();
 	private String shopCode;
-	private String bigGroupCode;
-	private Boolean useBigGroupCode = true;
+	private List<String> groupCodes;
 	private String orderSequenceCode;
 	private Long orderSequenceRandomOffset = 1l;
-	private List<String> registrationShopCode;
 	private String shopType;
 	private String cartCode;
 	private String assortmentCode;
@@ -89,8 +87,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	public ShopContextImpl(ShopContext definition) {
 		setShopCode(definition.getShopCode());
-		setBigGroupCode(definition.getBigGroupCode());
-		setUseBigGroupCode(definition.getUseBigGroupCode());
+		setGroupCodes(definition.getGroupCodes());
 		setOrderSequenceCode(definition.getOrderSequenceCode());
 		setOrderSequenceRandomOffset(definition.getOrderSequenceRandomOffset());
 		setAssortmentCode(definition.getAssortmentCode());
@@ -107,7 +104,6 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 		setNewsletterIds(definition.getNewsletterIds());
 		setGtmId(definition.getGtmId());
 		setShopType(definition.getShopType());
-		setRegistrationShopCode(definition.getRegistrationShopCode());
 	}
 
 	@Override
@@ -142,20 +138,20 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	}
 
 	@Override
-	public String getBigGroupCode() {
-		return bigGroupCode;
+	public List<String> getGroupCodes() {
+		return groupCodes;
 	}
 	
 	@Override
-	public Boolean getUseBigGroupCode() {
-		return useBigGroupCode;
+	public void setGroupCodes(List<String> groupCodes) {
+		this.groupCodes = groupCodes;
 	}
 	
 	@Override
-	public void setUseBigGroupCode(Boolean useBigGroupCode) {
-		this.useBigGroupCode = useBigGroupCode;
+	public void setGroupCodesString(String groupCodesString) {
+		this.groupCodes = Arrays.asList(groupCodesString.split(","));
 	}
-
+	
 	@Override
 	public String getOrderSequenceCode() {
 		return orderSequenceCode;
@@ -174,26 +170,6 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	@Override
 	public void setOrderSequenceRandomOffset(Long orderSequenceRandomOffset) {
 		this.orderSequenceRandomOffset = orderSequenceRandomOffset;
-	}
-
-	@Override
-	public void setBigGroupCode(String bigGroupCode) {
-		this.bigGroupCode = bigGroupCode;
-	}
-
-	@Override
-	public List<String> getRegistrationShopCode() {
-		return registrationShopCode;
-	}
-
-	@Override
-	public void setRegistrationShopCode(List<String> registrationShopCode) {
-		this.registrationShopCode = registrationShopCode;
-	}
-
-	@Override
-	public void setRegistrationShopCodeString(String registrationShopCodeString) {
-		this.registrationShopCode = Arrays.asList(registrationShopCodeString.split(","));
 	}
 
 	@Override

@@ -7,6 +7,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -92,10 +93,10 @@ public class RegistrationBox extends AbstractLoginBox {
 				try {
 					List<String> shopCodesOnRegistration = new ArrayList<>();
 					shopCodesOnRegistration.add(shopContext.getShopCode());
-					if (StringUtils.isNotEmpty(shopContext.getBigGroupCode()) && shopContext.getUseBigGroupCode()) {
-						shopCodesOnRegistration.add(shopContext.getBigGroupCode());
+					if (CollectionUtils.isNotEmpty(shopContext.getGroupCodes())) {
+						shopCodesOnRegistration.addAll(shopContext.getGroupCodes());
 					}
-
+					
 					customer = customerService.register(registerForm.getRegisterEmail(),
 							registerForm.getRegisterPassword(), shopCodesOnRegistration);
 
