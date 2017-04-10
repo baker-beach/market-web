@@ -33,7 +33,7 @@ public class HeaderBox extends AbstractBox{
 		Customer customer = CustomerHelper.getCustomer();
 		getData().put("customer", customer);
 
-		Boolean authenticated = CustomerHelper.isCustomer();
+		Boolean authenticated = CustomerHelper.isAuthenticated();
 		getData().put("authenticated", authenticated);
 		
 		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
