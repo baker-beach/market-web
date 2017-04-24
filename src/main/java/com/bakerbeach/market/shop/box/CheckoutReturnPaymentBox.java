@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.servlet.FlashMap;
+import org.springframework.web.servlet.support.RequestContextUtils;
 
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
@@ -52,7 +54,10 @@ public class CheckoutReturnPaymentBox extends AbstractBox implements Processable
 			paymentService.processReturn(shopContext, param);
 		} catch (PaymentServiceException e) {
 			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_PAYMENT);
-			throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
+			if(shopContext.getRequestData().containsKey("iframe_redirect")){
+				request.getSession().setAttribute("messages", e.getMessages());
+			}else			
+				throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
 		}
 
 		if (shopContext.getRequestData().containsKey("redirect"))
