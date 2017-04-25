@@ -80,8 +80,7 @@ public class XCartEditBox extends AbstractBox implements ProcessableBox {
 			Map<String, String[]> parameter = request.getParameterMap();
 
 			if (request.getMethod().equals(RequestMethod.POST.toString())) {
-				FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
-				flashMap.put("messages", messages);
+				request.getSession().setAttribute("messages", messages);
 
 				if (shopContext.getRequestData() != null) {
 					String operation = (String) shopContext.getRequestData().get("operation");
