@@ -28,6 +28,7 @@ import com.bakerbeach.market.xcatalog.model.Pager;
 import com.bakerbeach.market.xcatalog.service.XCatalogService;
 import com.bakerbeach.market.xcatalog.utils.XFacetFactory;
 
+
 public abstract class AbstractXProductListBox extends AbstractBox {
 	protected static final long serialVersionUID = 1L;
 

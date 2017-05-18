@@ -10,7 +10,7 @@
 	<artifactId>market-xweb</artifactId>
 	<name>web</name>
 	<packaging>jar</packaging>
-	<version>0.9.0-SNAPSHOT</version>
+	<version>3.0.0</version>
 	<properties>
 		<servlet-api.version>2.5</servlet-api.version>
 		<velocity.version>1.7</velocity.version>
@@ -33,8 +33,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
-			<artifactId>market-xcatalog</artifactId>
-			<version>[0.9.0-SNAPSHOT]</version>
+			<artifactId>market-catalog</artifactId>
+			<version>[3.0.0,3.1.0)</version>
 		</dependency>
 		<!--
 		-->
@@ -46,12 +46,12 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-xcart-api</artifactId>
-			<version>[0.8.9,1.0.0)</version>
+			<version>[3.0.0]</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-shipping-api</artifactId>
-			<version>[1.0.0,1.1.0)</version>
+			<version>[3.0.0,3.1.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
@@ -66,7 +66,7 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-order</artifactId>
-			<version>[2.1.3-SNAPSHOT]</version>
+			<version>[3.0.0,3.1.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
