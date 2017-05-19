@@ -37,7 +37,7 @@ public class AbstractRegistrationForm implements RegisterForm{
 	}
 	
 	@NotEmpty(message = "register.error.email")
-	@Pattern(regexp = "^[-+.\\w]{1,64}@[-.\\w]{1,64}\\.[-.\\w]{2,6}$", message = "register.error.email")
+	@Pattern(regexp = "^[-+.\\w]{1,64}@[-.\\w]{1,64}\\.[-.\\w]{2,23}$", message = "register.error.email")
 	public String getRegisterEmail() {
 		return registerEmail;
 	}
