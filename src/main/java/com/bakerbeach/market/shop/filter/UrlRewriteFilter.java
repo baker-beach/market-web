@@ -32,17 +32,16 @@ public class UrlRewriteFilter extends AbstractContextFilter {
 			chain.doFilter(httpServletRequest, response);
 		} else {
 			UrlRewriteResponse urlRewriteResponse = new UrlRewriteResponse(httpServletResponse, httpServletRequest, outboundUrlRewriter);
-
+			
+			if (request.getAttribute("x-path") == null) {
 				boolean requestRewritten = inboundUrlRewriter.processRequest(httpServletRequest, urlRewriteResponse, chain);
+				if (!requestRewritten) {
+					chain.doFilter(httpServletRequest, urlRewriteResponse);
+				}
+			} else {
 				chain.doFilter(httpServletRequest, urlRewriteResponse);
-//			if (request.getAttribute("x-path") == null) {
-//				boolean requestRewritten = inboundUrlRewriter.processRequest(httpServletRequest, urlRewriteResponse, chain);
-//				if (!requestRewritten) {
-//					chain.doFilter(httpServletRequest, urlRewriteResponse);
-//				}
-//			} else {
-//				chain.doFilter(httpServletRequest, urlRewriteResponse);
-//			}
+			}
+					
 		}
 	}
 
