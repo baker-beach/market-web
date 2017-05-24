@@ -38,8 +38,10 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	private ModelMap modelMap;
 
 	private String helperClass = ShopHelper.class.getName();
-
 	private String shopCode;
+	private List<String> groupCodes;
+	private String orderSequenceCode;
+	private Long orderSequenceRandomOffset = 1l;
 	private String shopType;
 	private String cartCode;
 	private String assortmentCode;
@@ -85,6 +87,9 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	public ShopContextImpl(ShopContext definition) {
 		setShopCode(definition.getShopCode());
+		setGroupCodes(definition.getGroupCodes());
+		setOrderSequenceCode(definition.getOrderSequenceCode());
+		setOrderSequenceRandomOffset(definition.getOrderSequenceRandomOffset());
 		setAssortmentCode(definition.getAssortmentCode());
 		setHost(definition.getHost());
 		setPort(definition.getPort());
@@ -99,8 +104,6 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 		setNewsletterIds(definition.getNewsletterIds());
 		setGtmId(definition.getGtmId());
 		setShopType(definition.getShopType());
-
-
 	}
 
 	@Override
@@ -132,6 +135,41 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	@Override
 	public void setShopCode(String shopCode) {
 		this.shopCode = shopCode;
+	}
+
+	@Override
+	public List<String> getGroupCodes() {
+		return groupCodes;
+	}
+	
+	@Override
+	public void setGroupCodes(List<String> groupCodes) {
+		this.groupCodes = groupCodes;
+	}
+	
+	@Override
+	public void setGroupCodesString(String groupCodesString) {
+		this.groupCodes = Arrays.asList(groupCodesString.split(","));
+	}
+	
+	@Override
+	public String getOrderSequenceCode() {
+		return orderSequenceCode;
+	}
+
+	@Override
+	public void setOrderSequenceCode(String orderSequenceCode) {
+		this.orderSequenceCode = orderSequenceCode;
+	}
+
+	@Override
+	public Long getOrderSequenceRandomOffset() {
+		return orderSequenceRandomOffset;
+	}
+
+	@Override
+	public void setOrderSequenceRandomOffset(Long orderSequenceRandomOffset) {
+		this.orderSequenceRandomOffset = orderSequenceRandomOffset;
 	}
 
 	@Override
