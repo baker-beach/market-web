@@ -12,7 +12,7 @@ import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.cms.box.RedirectException;
 import com.bakerbeach.market.cms.model.Redirect;
-import com.bakerbeach.market.core.api.model.Messages;
+import com.bakerbeach.market.commons.Messages;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 

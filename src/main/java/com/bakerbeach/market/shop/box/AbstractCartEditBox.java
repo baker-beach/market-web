@@ -2,6 +2,7 @@ package com.bakerbeach.market.shop.box;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Currency;
 import java.util.Date;
@@ -19,16 +20,18 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
 
+import com.bakerbeach.market.cart.api.service.CartService;
+import com.bakerbeach.market.cart.api.service.CartServiceException;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
+import com.bakerbeach.market.commons.Message;
 import com.bakerbeach.market.commons.MessageImpl;
+import com.bakerbeach.market.commons.Messages;
 import com.bakerbeach.market.commons.MessagesImpl;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.CartItem;
 import com.bakerbeach.market.core.api.model.CartItemQualifier;
 import com.bakerbeach.market.core.api.model.Customer;
-import com.bakerbeach.market.core.api.model.Message;
-import com.bakerbeach.market.core.api.model.Messages;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.box.AbstractCartEditBox.AddToCartForm.ProductForm;
 import com.bakerbeach.market.shop.box.AbstractCartEditBox.QuantityUpdateCartForm.CartItemForm;
@@ -36,8 +39,6 @@ import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 import com.bakerbeach.market.translation.api.service.TranslationService;
-import com.bakerbeach.market.xcart.api.service.XCartService;
-import com.bakerbeach.market.xcart.api.service.XCartServiceException;
 import com.bakerbeach.market.xcatalog.model.Asset;
 import com.bakerbeach.market.xcatalog.model.Price;
 import com.bakerbeach.market.xcatalog.model.Product;
@@ -51,27 +52,127 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 	protected XCatalogService catalogService;
 
 	@Autowired
-	protected XCartService cartService;
+	protected CartService cartService;
 
 	@Autowired
 	protected TranslationService translationService;
 
+	protected void update(HttpServletRequest request, HttpServletResponse response, Messages messages) throws CartServiceException {
+		ShopContext shopContext = ShopContextHolder.getInstance();
+		String shopCode = shopContext.getShopCode();
+		Customer customer = CustomerHelper.getCustomer();
+
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
+
+		AddToCartForm form = new AddToCartForm();
+		BindingResult result = bind(form, request);
+		if (!result.hasErrors()) {
+			
+			BigDecimal defaultQuantity = new BigDecimal(form.getQuantity());
+			
+			List<CartItem> newCartItems = new ArrayList<CartItem>();
+			List<CartItem> existingCartItems = new ArrayList<CartItem>();
+			
+			form.getProducts().forEach((k, v) -> {
+				try {
+					if (cart.getItems().containsKey(k)) {
+						// updateCartItem(...)
+						messages.addAll(cartService.setQuantity(cart, k, new BigDecimal(42)));
+					} else {
+						// add new
+						CartItem item = createNewCartItem(v, defaultQuantity);
+						cart.getItems().put(k, item);
+					}
+					// add messages
+				} catch (CartServiceException e) {
+					log.warn(ExceptionUtils.getStackTrace(e));
+				}
+			});			
+			
+		} else {
+			messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected"));
+		}
+				
+	}
+	
+	private CartItem createNewCartItem(ProductForm form, BigDecimal defaultQuantity) throws CartServiceException {
+		ShopContext shopContext = ShopContextHolder.getInstance();
+		String shopCode = shopContext.getShopCode();
+		Customer customer = CustomerHelper.getCustomer();
+		String priceGroup = shopContext.getCurrentPriceGroup();
+		Currency currency = Currency.getInstance(shopContext.getCurrency());
+		Date date = new Date();
+
+		List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED, Arrays.asList(form.getGtin()));
+		for (Product product : products) {
+			BigDecimal itemCount = (defaultQuantity.compareTo(BigDecimal.ZERO) != 0) ? defaultQuantity : form.getQuantity();
+		
+			
+			Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
+			
+			CartItem cartItem = cart.getNewItem(product.getCode(), itemCount);
+			setCartItemAttributes(cartItem, product, shopContext);
+
+			for (Option po : product.getOptions().values()) {
+				BigDecimal quantity = BigDecimal.ZERO;
+				if (form.getOptions().containsKey(po.getCode())) {
+					quantity = form.getOption(po.getCode()).getQuantity();
+				} else if (po.isRequired()) {
+					if (StringUtils.isNotEmpty(po.getComponentCode())) {
+						if (product.getComponents().containsKey(po.getComponentCode())) {
+							if (product.getComponent(po.getComponentCode()).isRequired()) {
+								quantity = po.getDefaultQty();
+							}
+						}
+					} else {
+						quantity = po.getDefaultQty();
+					}
+				}
+
+				if (quantity.compareTo(BigDecimal.ZERO) == 1) {
+					CartItem.Option cio = cartItem.newOption(po.getCode(), null);
+					cio.setGtin(po.getGtin());
+					cio.setQuantity(quantity);
+
+					Price price = po.getPrice(currency, priceGroup, date);
+					if (price != null) {
+						BigDecimal optionPrice = price.getValue();
+						cio.setUnitPrice("std", price.getValue());
+						cio.multiplyUnitPrices(cio.getQuantity());
+					}
+				}
+			}
+
+			// cart item price ---
+			// TODO: change price model in product to tagged prices
+			Price productPrice = product.getPrice(currency, priceGroup, date);
+			cartItem.setUnitPrice("std", productPrice.getValue());
+			cartItem.getOptions().forEach((k, o) -> {
+				cartItem.addUnitPrices(o.getUnitPrices());
+			});
+			
+			return cartItem;
+		}
+		
+		throw new CartServiceException("not found");
+	}
+	/*
 	protected void update(HttpServletRequest request, HttpServletResponse response, Messages messages) throws XCartServiceException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		
 		if (shopContext.getRequestData() != null) {
 			String operation = (String) shopContext.getRequestData().get("operation");
 			if ("add".equals(operation)) {
-
+				
 				AddToCartForm addToCartForm = new AddToCartForm();
 				BindingResult result = bind(addToCartForm, request);
 				if (!result.hasErrors()) {
-					List<CartItem> cartItems = getCartItems(addToCartForm);
+					List<CartItem> cartItems = __getCartItems(addToCartForm);
 					messages.addAll(addItems(shopContext, cartItems));
 				} else {
 					messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected"));
 				}
-
+				
 			} else if ("update".equals(operation)) {
 				QuantityUpdateCartForm cartForm = new QuantityUpdateCartForm();
 				BindingResult result = bind(cartForm, request);
@@ -80,19 +181,20 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 				} else {
 					messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected"));
 				}
-
+				
 			}
 		}
 	}
+	*/
 	
-	protected final Messages addItems(ShopContext shopContext, Collection<CartItem> cartItems) throws XCartServiceException {
+	protected final Messages addItems(ShopContext shopContext, Collection<CartItem> cartItems) throws CartServiceException {
 		Messages messages = new MessagesImpl();
 		
 		try {
 			String shopCode = shopContext.getShopCode();
 
 			Customer customer = CustomerHelper.getCustomer();
-			Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+			Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 
 
 			for (CartItem cartItem : cartItems) {
@@ -109,12 +211,12 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 		return messages;
 	}
 
-	protected final Messages updateQuantities(QuantityUpdateCartForm cartForm) throws XCartServiceException {
+	protected final Messages updateQuantities(QuantityUpdateCartForm cartForm) throws CartServiceException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		String shopCode = shopContext.getShopCode();
 
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 
 		Messages messages = new MessagesImpl();
 
@@ -135,7 +237,7 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 	}
 
 
-	protected final List<CartItem> getCartItems(AddToCartForm productListForm) {
+	protected final List<CartItem> getNewCartItems(AddToCartForm productListForm) {
 		List<CartItem> cartItems = new ArrayList<CartItem>();
 		try {
 			ShopContext cmsContext = ShopContextHolder.getInstance();
@@ -143,29 +245,28 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 			String priceGroup = cmsContext.getCurrentPriceGroup();
 			Currency currency = Currency.getInstance(cmsContext.getCurrency());
 			Date date = new Date();
+			Customer customer = CustomerHelper.getCustomer();
 
+			Cart cart = CartHolder.getInstance(cartService, cmsContext, customer);
+			
 			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
 
-			Map<String, ProductForm> requestedProducts = new HashMap<String, ProductForm>(
-					productListForm.getProducts().size());
-			for (String key : productListForm.getProducts().keySet()) {
-				ProductForm product = productListForm.getProducts().get(key);
-				if (product.getQuantity().compareTo(BigDecimal.ZERO) == 1) {
-					requestedProducts.put(key, product);
+			Map<String, ProductForm> toBeRequested = new HashMap<String, ProductForm>();
+			for (Entry<String, ProductForm> e : productListForm.getProducts().entrySet()) {
+				if (!cart.getItems().containsKey(e.getKey())) {
+					toBeRequested.put(e.getKey(), e.getValue());
 				}
 			}
-
+			
 			List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
-					requestedProducts.keySet());
+					toBeRequested.keySet());
 			for (Product product : products) {
-				ProductForm productForm = requestedProducts.get(product.getGtin());
-
-				// get quantity either from global value or for individual
-				// items.
+				ProductForm productForm = toBeRequested.get(product.getGtin());
+			
 				BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
 						: productForm.getQuantity();
-
-				CartItem cartItem = cartService.getNewCartItem(shopCode, product.getCode(), itemCount);
+			
+				CartItem cartItem = cart.getNewItem(product.getCode(), itemCount);
 				setCartItemAttributes(cartItem, product, cmsContext);
 
 				for (Option po : product.getOptions().values()) {
@@ -207,12 +308,96 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 				});
 
 				cartItems.add(cartItem);
-			}
-
+			}			
 		} catch (Exception e) {
 			log.error(ExceptionUtils.getStackTrace(e));
 		}
 
+		return cartItems;
+	}
+	
+	protected final List<CartItem> getCartItems(AddToCartForm productListForm) {
+		List<CartItem> cartItems = new ArrayList<CartItem>();
+		try {
+			ShopContext cmsContext = ShopContextHolder.getInstance();
+			String shopCode = cmsContext.getShopCode();
+			String priceGroup = cmsContext.getCurrentPriceGroup();
+			Currency currency = Currency.getInstance(cmsContext.getCurrency());
+			Date date = new Date();
+			
+			Customer customer = CustomerHelper.getCustomer();
+			
+			Cart cart = CartHolder.getInstance(cartService, cmsContext, customer);
+			
+			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
+			
+			Map<String, ProductForm> requestedProducts = new HashMap<String, ProductForm>(
+					productListForm.getProducts().size());
+			for (String key : productListForm.getProducts().keySet()) {
+				ProductForm product = productListForm.getProducts().get(key);
+				if (product.getQuantity().compareTo(BigDecimal.ZERO) == 1) {
+					requestedProducts.put(key, product);
+				}
+			}
+			
+			List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
+					requestedProducts.keySet());
+			for (Product product : products) {
+				ProductForm productForm = requestedProducts.get(product.getGtin());
+				
+				// get quantity either from global value or for individual
+				// items.
+				BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
+						: productForm.getQuantity();
+				
+				CartItem cartItem = cart.getNewItem(product.getCode(), itemCount);
+				setCartItemAttributes(cartItem, product, cmsContext);
+				
+				for (Option po : product.getOptions().values()) {
+					BigDecimal quantity = BigDecimal.ZERO;
+					if (productForm.getOptions().containsKey(po.getCode())) {
+						quantity = productForm.getOption(po.getCode()).getQuantity();
+					} else if (po.isRequired()) {
+						if (StringUtils.isNotEmpty(po.getComponentCode())) {
+							if (product.getComponents().containsKey(po.getComponentCode())) {
+								if (product.getComponent(po.getComponentCode()).isRequired()) {
+									quantity = po.getDefaultQty();
+								}
+							}
+						} else {
+							quantity = po.getDefaultQty();
+						}
+					}
+					
+					if (quantity.compareTo(BigDecimal.ZERO) == 1) {
+						CartItem.Option cio = cartItem.newOption(po.getCode(), null);
+						cio.setGtin(po.getGtin());
+						cio.setQuantity(quantity);
+						
+						Price price = po.getPrice(currency, priceGroup, date);
+						if (price != null) {
+							BigDecimal optionPrice = price.getValue();
+							cio.setUnitPrice("std", price.getValue());
+							cio.multiplyUnitPrices(cio.getQuantity());
+						}
+					}
+				}
+				
+				// cart item price ---
+				// TODO: change price model in product to tagged prices
+				Price productPrice = product.getPrice(currency, priceGroup, date);
+				cartItem.setUnitPrice("std", productPrice.getValue());
+				cartItem.getOptions().forEach((k, o) -> {
+					cartItem.addUnitPrices(o.getUnitPrices());
+				});
+				
+				cartItems.add(cartItem);
+			}
+			
+		} catch (Exception e) {
+			log.error(ExceptionUtils.getStackTrace(e));
+		}
+		
 		return cartItems;
 	}
 	

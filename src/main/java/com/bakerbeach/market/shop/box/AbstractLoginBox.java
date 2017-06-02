@@ -11,6 +11,8 @@ import org.apache.shiro.web.util.SavedRequest;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.bakerbeach.market.cart.api.service.CartService;
+import com.bakerbeach.market.cart.api.service.CartServiceException;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.model.Redirect;
@@ -20,26 +22,23 @@ import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
-import com.bakerbeach.market.xcart.api.service.XCartService;
-import com.bakerbeach.market.xcart.api.service.XCartServiceException;
 
 public abstract class AbstractLoginBox extends AbstractBox implements ProcessableBox {
 	private static final long serialVersionUID = 1L;
 
 	@Autowired
-	private XCartService cartService;
-	
+	private CartService cartService;
+
 	protected Redirect onSuccessfulAuthentication(HttpServletRequest request, Helper helper) {
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		String shopCode = shopContext.getShopCode();
 
 		Subject subject = SecurityUtils.getSubject();
 		Customer customer = (Customer) subject.getPrincipal();
-		
-		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 		try {
 			if (cart != null && !customer.getId().equals(cart.getCustomerId())) {
-				Cart lastActiveCart = cartService.loadActiveCart(shopCode, customer);
+				Cart lastActiveCart = cartService.loadActiveCart(shopContext, customer);
 				if (lastActiveCart != null) {
 					cartService.merge(cart, lastActiveCart);
 					CartHolder.setInstance(lastActiveCart);
@@ -50,26 +49,26 @@ public abstract class AbstractLoginBox extends AbstractBox implements Processabl
 					cartService.saveCart(customer, cart);
 				}
 			}
-		} catch (XCartServiceException e) {
+		} catch (CartServiceException e) {
 			log.error(ExceptionUtils.getStackTrace(e));
 		}
 
 		return getRedirect(request);
 	}
-	
+
 	private Redirect getRedirect(HttpServletRequest request) {
 		SavedRequest savedRequest = WebUtils.getAndClearSavedRequest(request);
 		if (savedRequest != null) {
 			String savedUrl = savedRequest.getRequestUrl();
 			String contextPath = request.getContextPath();
 			String url = savedUrl.replaceAll("^" + contextPath, "");
-			return new Redirect(url,null,Redirect.RAW);
+			return new Redirect(url, null, Redirect.RAW);
 		} else {
-			return new Redirect("index",null,Redirect.URL_ID);
+			return new Redirect("index", null, Redirect.URL_ID);
 		}
 	}
 
-	protected void doLogin(String email, String password, boolean rememberMe)throws AuthenticationException{		
+	protected void doLogin(String email, String password, boolean rememberMe) throws AuthenticationException {
 		Subject subject = SecurityUtils.getSubject();
 
 		UsernamePasswordToken token = new UsernamePasswordToken(email, password);

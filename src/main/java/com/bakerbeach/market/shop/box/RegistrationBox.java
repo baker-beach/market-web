@@ -1,7 +1,6 @@
 package com.bakerbeach.market.shop.box;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,10 +24,10 @@ import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.cms.box.RedirectException;
 import com.bakerbeach.market.cms.model.Redirect;
 import com.bakerbeach.market.commons.FieldMessageImpl;
+import com.bakerbeach.market.commons.Message;
 import com.bakerbeach.market.commons.MessageImpl;
+import com.bakerbeach.market.commons.Messages;
 import com.bakerbeach.market.core.api.model.Customer;
-import com.bakerbeach.market.core.api.model.Message;
-import com.bakerbeach.market.core.api.model.Messages;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.customer.api.service.CustomerService;
 import com.bakerbeach.market.customer.api.service.CustomerServiceException;

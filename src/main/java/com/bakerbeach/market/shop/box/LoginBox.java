@@ -15,9 +15,9 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 
 import com.bakerbeach.market.cms.box.RedirectException;
 import com.bakerbeach.market.cms.model.Redirect;
+import com.bakerbeach.market.commons.Message;
 import com.bakerbeach.market.commons.MessageImpl;
-import com.bakerbeach.market.core.api.model.Message;
-import com.bakerbeach.market.core.api.model.Messages;
+import com.bakerbeach.market.commons.Messages;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.model.forms.Login;
 import com.bakerbeach.market.shop.service.ShopContextHolder;

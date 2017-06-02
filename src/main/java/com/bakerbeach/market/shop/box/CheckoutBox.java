@@ -16,18 +16,20 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 
 import com.bakerbeach.market.address.api.service.CustomerAddressService;
 import com.bakerbeach.market.address.api.service.CustomerAdressServiceException;
+import com.bakerbeach.market.cart.api.service.CartService;
+import com.bakerbeach.market.cart.api.service.CartServiceException;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.cms.box.RedirectException;
 import com.bakerbeach.market.cms.model.Redirect;
+import com.bakerbeach.market.commons.Messages;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.CartItemQualifier;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.core.api.model.CustomerAddress;
-import com.bakerbeach.market.core.api.model.Messages;
-import com.bakerbeach.market.core.api.model.Order;
 import com.bakerbeach.market.core.api.model.ShopContext;
+import com.bakerbeach.market.order.api.model.Order;
 import com.bakerbeach.market.order.api.service.OrderService;
 import com.bakerbeach.market.order.api.service.OrderServiceException;
 import com.bakerbeach.market.payment.api.model.PaymentInfo;
@@ -38,8 +40,6 @@ import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CheckoutStatusResolver;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
-import com.bakerbeach.market.xcart.api.service.XCartService;
-import com.bakerbeach.market.xcart.api.service.XCartServiceException;
 
 @Component("com.bakerbeach.market.shop.box.CheckoutBox")
 @Scope("prototype")
@@ -53,7 +53,7 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 	protected static Logger log = Logger.getLogger(CheckoutBox.class.getName());
 
 	@Autowired
-	private XCartService cartService;
+	private CartService cartService;
 
 	@Autowired
 	private PaymentService paymentService;
@@ -68,10 +68,9 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model)
 			throws ProcessableBoxException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		String shopCode = shopContext.getShopCode();
 		Customer customer = CustomerHelper.getCustomer();
 		
-		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 		
 		if (shopContext.getRequestData().containsKey("doOrder")) {
 			shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_SUMMARY);
@@ -96,7 +95,7 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 		String shopCode = shopContext.getShopCode();
 		Customer customer = CustomerHelper.getCustomer();
 		
-		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 
 		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
 
@@ -121,7 +120,7 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 				cartService.setStatus(customer, cart, "ORDERED");
 				cartService.saveCart(customer, cart);
 				CartHolder.setInstance(null);
-			} catch (XCartServiceException e) {
+			} catch (CartServiceException e) {
 				log.error(ExceptionUtils.getStackTrace(e));
 			}
 						

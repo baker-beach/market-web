@@ -9,7 +9,6 @@ import org.springframework.ui.ModelMap;
 
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.core.api.model.FilterList;
-import com.bakerbeach.market.xcatalog.model.SearchResult;
 
 @Component("com.bakerbeach.market.shop.box.FacetFilterBox")
 @Scope("prototype")

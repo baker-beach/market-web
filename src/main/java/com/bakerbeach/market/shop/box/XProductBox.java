@@ -28,7 +28,6 @@ import com.bakerbeach.market.translation.api.service.TranslationService;
 import com.bakerbeach.market.xcatalog.model.Group;
 import com.bakerbeach.market.xcatalog.model.Product;
 import com.bakerbeach.market.xcatalog.model.Product.Status;
-import com.bakerbeach.market.xcatalog.model.SearchResult;
 import com.bakerbeach.market.xcatalog.service.XCatalogService;
 
 @Component("com.bakerbeach.market.shop.box.XProductBox")

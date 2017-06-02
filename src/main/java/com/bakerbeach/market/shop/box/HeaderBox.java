@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.ModelMap;
 
+import com.bakerbeach.market.cart.api.service.CartService;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.Customer;
@@ -15,69 +16,63 @@ import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
-import com.bakerbeach.market.xcart.api.service.XCartService;
 
 @Component("com.bakerbeach.market.shop.box.HeaderBox")
 @Scope("prototype")
-public class HeaderBox extends AbstractBox{
+public class HeaderBox extends AbstractBox {
 
 	private static final long serialVersionUID = 1L;
-		
+
 	@Autowired
-	private XCartService cartService;
-	
+	private CartService cartService;
+
 	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		String shopCode = shopContext.getShopCode();
 
 		Customer customer = CustomerHelper.getCustomer();
 		getData().put("customer", customer);
 
 		Boolean authenticated = CustomerHelper.isAuthenticated();
 		getData().put("authenticated", authenticated);
-		
-		Cart cart = CartHolder.getInstance(cartService, shopCode, customer);
+
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 		getData().put("cart", cart);
 	}
 }
 
+// Helper helper = (Helper) modelMap.get("helper");
 
+// String customerStatus = "anonymous";
+// Boolean isAuthenticated = helper.isAuthenticated();
+// Boolean isIdentified = helper.isIdentified();
+//
+// String customerStatus = "anonymous";
+//
+// Customer customer = CustomerHelper.getCustomer();
+// if(customer != null) {
+// customerStatus = "recognized";
+// if (customer.is)
+// }
 
-
-
-//		Helper helper = (Helper) modelMap.get("helper");
-
-//		String customerStatus = "anonymous";
-//		Boolean isAuthenticated = helper.isAuthenticated();
-//		Boolean isIdentified = helper.isIdentified();
+// public Boolean isIdentified() {
+// Object principal = SecurityUtils.getSubject().getPrincipal();
+// return principal != null && !(principal instanceof AnonymousCustomer);
+// }
 //
-//		String customerStatus = "anonymous";
-//
-//		Customer customer = CustomerHelper.getCustomer();
-//		if(customer != null) {
-//			customerStatus = "recognized";
-//			if (customer.is)
-//		}
-
-//	public Boolean isIdentified() {
-//		Object principal = SecurityUtils.getSubject().getPrincipal();
-//		return principal != null && !(principal instanceof AnonymousCustomer);
-//	}
-//
-//		Boolean isAuthenticated = SecurityUtils.getSubject().isAuthenticated();
+// Boolean isAuthenticated = SecurityUtils.getSubject().isAuthenticated();
 //
 //
 //
 //
-//		String customerName = "";
+// String customerName = "";
 //
-//		if (customer.getFirstName() != null)
-//			customerName = customer.getFirstName();
+// if (customer.getFirstName() != null)
+// customerName = customer.getFirstName();
 //
-//		if (customer.getLastName() != null)
-//			customerName = customerName + " " + customer.getLastName();
+// if (customer.getLastName() != null)
+// customerName = customerName + " " + customer.getLastName();
 //
-//		if (customerName.equals(""))
-//			customerName = "Lieber Kunde";
+// if (customerName.equals(""))
+// customerName = "Lieber Kunde";
 //
-//		getData().put("customerName", customerName);
+// getData().put("customerName", customerName);

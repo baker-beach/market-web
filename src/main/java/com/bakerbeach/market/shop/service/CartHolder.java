@@ -6,35 +6,36 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import com.bakerbeach.market.cart.api.service.CartService;
+import com.bakerbeach.market.cart.api.service.CartServiceException;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.Customer;
-import com.bakerbeach.market.xcart.api.service.XCartService;
-import com.bakerbeach.market.xcart.api.service.XCartServiceException;
+import com.bakerbeach.market.core.api.model.ShopContext;
 
 public class CartHolder {
 	protected static final Logger log = LoggerFactory.getLogger(CartHolder.class);
 
 	private static final String CART_SESSION_ATTRIBUTES_KEY = "cart_request_attribute";
 
-	public static Cart getInstance(XCartService cartService, String shopCode, Customer customer) {
-		try {
+	public static Cart getInstance(CartService cartService, ShopContext shopContext, Customer customer) {
+		try {			
 			Cart cart = CartHolder.getInstance();
-			if (cart == null || !shopCode.equals(cart.getShopCode())) {
-				cart = cartService.getInstance(shopCode, customer);
+			if (cart == null || !shopContext.getShopCode().equals(cart.getShopCode())) {
+				cart = cartService.getInstance(shopContext, customer);
 				CartHolder.setInstance(cart);
 			}
 
 			return cart;
-		} catch (XCartServiceException e) {
+		} catch (CartServiceException e) {
 			log.error(ExceptionUtils.getStackTrace(e));
 			return null;
 		}
 	}
 
-	public static Cart getNewInstance(XCartService cartService, String shopCode, Customer customer) {
+	public static Cart getNewInstance(CartService cartService, ShopContext shopContext, Customer customer) {
 		try {
-			return cartService.getNewInstance(shopCode, customer);
-		} catch (XCartServiceException e) {
+			return cartService.getNewInstance(shopContext, customer);
+		} catch (CartServiceException e) {
 			log.error(ExceptionUtils.getStackTrace(e));
 			return null;
 		}

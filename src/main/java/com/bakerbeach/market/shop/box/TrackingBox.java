@@ -9,8 +9,8 @@ import org.springframework.ui.ModelMap;
 
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.core.api.model.Customer;
-import com.bakerbeach.market.core.api.model.Order;
 import com.bakerbeach.market.core.api.model.ShopContext;
+import com.bakerbeach.market.order.api.model.Order;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 

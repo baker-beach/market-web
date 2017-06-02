@@ -23,9 +23,9 @@ import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.core.api.model.Filter;
 import com.bakerbeach.market.core.api.model.FilterList;
 import com.bakerbeach.market.core.api.model.Option;
-import com.bakerbeach.market.core.api.model.OrderItem;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.customer.model.AnonymousCustomer;
+import com.bakerbeach.market.order.api.model.OrderItem;
 
 @Component
 @Scope("prototype")
