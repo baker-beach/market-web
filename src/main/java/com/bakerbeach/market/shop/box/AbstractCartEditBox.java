@@ -1,7 +1,6 @@
 package com.bakerbeach.market.shop.box;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Currency;
@@ -33,8 +32,6 @@ import com.bakerbeach.market.core.api.model.CartItem;
 import com.bakerbeach.market.core.api.model.CartItemQualifier;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.core.api.model.ShopContext;
-import com.bakerbeach.market.shop.box.AbstractCartEditBox.AddToCartForm.ProductForm;
-import com.bakerbeach.market.shop.box.AbstractCartEditBox.QuantityUpdateCartForm.CartItemForm;
 import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
@@ -59,90 +56,99 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 
 	protected void update(HttpServletRequest request, HttpServletResponse response, Messages messages) throws CartServiceException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		String shopCode = shopContext.getShopCode();
 		Customer customer = CustomerHelper.getCustomer();
-
 		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 
-		AddToCartForm form = new AddToCartForm();
-		BindingResult result = bind(form, request);
-		if (!result.hasErrors()) {
-			
-			BigDecimal defaultQuantity = new BigDecimal(form.getQuantity());
-			
-			List<CartItem> newCartItems = new ArrayList<CartItem>();
-			List<CartItem> existingCartItems = new ArrayList<CartItem>();
-			
-			form.getProducts().forEach((k, v) -> {
-				try {
-					if (cart.getItems().containsKey(k)) {
-						// updateCartItem(...)
-						messages.addAll(cartService.setQuantity(cart, k, new BigDecimal(42)));
-					} else {
-						// add new
-						CartItem item = createNewCartItem(v, defaultQuantity);
-						cart.getItems().put(k, item);
-					}
-					// add messages
-				} catch (CartServiceException e) {
-					log.warn(ExceptionUtils.getStackTrace(e));
-				}
-			});			
-			
-		} else {
-			messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected"));
-		}
+		try {
+			CartForm form = new CartForm();
+			BindingResult result = bind(form, request);
+			if (!result.hasErrors()) {
 				
-	}
-	
-	private CartItem createNewCartItem(ProductForm form, BigDecimal defaultQuantity) throws CartServiceException {
-		ShopContext shopContext = ShopContextHolder.getInstance();
-		String shopCode = shopContext.getShopCode();
-		Customer customer = CustomerHelper.getCustomer();
-		String priceGroup = shopContext.getCurrentPriceGroup();
-		Currency currency = Currency.getInstance(shopContext.getCurrency());
-		Date date = new Date();
+				BigDecimal defaultQuantity = new BigDecimal(form.getDefaultQuantity());
+				form.getItems().forEach((k, v) -> {
+					try {
+						BigDecimal quantity = (v.getQuantity() != null)? v.getQuantity() : defaultQuantity;
 
-		List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED, Arrays.asList(form.getGtin()));
-		for (Product product : products) {
-			BigDecimal itemCount = (defaultQuantity.compareTo(BigDecimal.ZERO) != 0) ? defaultQuantity : form.getQuantity();
+						if (cart.getItems().containsKey(k)) {
+							CartItem item = cart.getItems().get(k);
+							
+							if (CartForm.MODE_ADD.equals(form.getMode())) {
+								quantity = item.getQuantity().add(quantity);
+							}
+							
+							Messages msgs = cartService.setQuantity(cart, k, quantity);
+							messages.addAll(msgs);
+						} else {
+							CartItem item = createNewCartItem(cart, v);
+
+							item.setQuantity(quantity);
+
+							Messages msgs = cartService.addCartItem(shopContext, cart, item);
+							messages.addAll(msgs);
+						}
+					} catch (CartServiceException e) {
+						log.warn(ExceptionUtils.getStackTrace(e));
+					}
+				});
+				
+			} else {
+				messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected"));
+			}
+
+		} catch (Exception e) {
+			throw(e);
+		} finally {
+			cartService.calculate(shopContext, cart, customer);
+		}
+	}
+
+	private CartItem createNewCartItem(Cart cart, CartForm.CartItemForm form) throws CartServiceException {
+		ShopContext shopContext = ShopContextHolder.getInstance();
+		Currency currency = Currency.getInstance(shopContext.getCurrentCurrency().getIsoCode());
+		String priceGroup = shopContext.getCurrentPriceGroup();
+		Date date = new Date();
 		
+		List<Product> products = catalogService.rawByGtin(shopContext.getShopCode(), Product.Status.PUBLISHED, Arrays.asList(form.getId()));
+		for (Product product : products) {
 			
-			Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
-			
-			CartItem cartItem = cart.getNewItem(product.getCode(), itemCount);
+			// get implementation specific cartItem class ---
+			CartItem cartItem = cart.getNewItem(product.getCode(), BigDecimal.ZERO);
 			setCartItemAttributes(cartItem, product, shopContext);
 
-			for (Option po : product.getOptions().values()) {
+			// TODO: options
+			for (Option option : product.getOptions().values()) {
 				BigDecimal quantity = BigDecimal.ZERO;
-				if (form.getOptions().containsKey(po.getCode())) {
-					quantity = form.getOption(po.getCode()).getQuantity();
-				} else if (po.isRequired()) {
-					if (StringUtils.isNotEmpty(po.getComponentCode())) {
-						if (product.getComponents().containsKey(po.getComponentCode())) {
-							if (product.getComponent(po.getComponentCode()).isRequired()) {
-								quantity = po.getDefaultQty();
+				if (form.getOptions().containsKey(option.getCode())) {
+					quantity = form.getOption(option.getCode()).getQuantity();
+				} else if (option.isRequired()) {
+					if (StringUtils.isNotEmpty(option.getComponentCode())) {
+						if (product.getComponents().containsKey(option.getComponentCode())) {
+							if (product.getComponent(option.getComponentCode()).isRequired()) {
+								quantity = option.getDefaultQty();
 							}
 						}
 					} else {
-						quantity = po.getDefaultQty();
+						quantity = option.getDefaultQty();
 					}
 				}
 
 				if (quantity.compareTo(BigDecimal.ZERO) == 1) {
-					CartItem.Option cio = cartItem.newOption(po.getCode(), null);
-					cio.setGtin(po.getGtin());
+					CartItem.Option cio = cartItem.newOption(option.getCode(), null);
+					cio.setGtin(option.getGtin());
 					cio.setQuantity(quantity);
 
-					Price price = po.getPrice(currency, priceGroup, date);
+					Price price = option.getPrice(currency, priceGroup, date);
 					if (price != null) {
-						BigDecimal optionPrice = price.getValue();
 						cio.setUnitPrice("std", price.getValue());
 						cio.multiplyUnitPrices(cio.getQuantity());
 					}
 				}
 			}
 
+			// use implementation specific id generation ---
+			String id = cartItem.createId();
+			cartItem.setId(id);
+			
 			// cart item price ---
 			// TODO: change price model in product to tagged prices
 			Price productPrice = product.getPrice(currency, priceGroup, date);
@@ -154,38 +160,9 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 			return cartItem;
 		}
 		
+		
 		throw new CartServiceException("not found");
 	}
-	/*
-	protected void update(HttpServletRequest request, HttpServletResponse response, Messages messages) throws XCartServiceException {
-		ShopContext shopContext = ShopContextHolder.getInstance();
-		
-		if (shopContext.getRequestData() != null) {
-			String operation = (String) shopContext.getRequestData().get("operation");
-			if ("add".equals(operation)) {
-				
-				AddToCartForm addToCartForm = new AddToCartForm();
-				BindingResult result = bind(addToCartForm, request);
-				if (!result.hasErrors()) {
-					List<CartItem> cartItems = __getCartItems(addToCartForm);
-					messages.addAll(addItems(shopContext, cartItems));
-				} else {
-					messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected"));
-				}
-				
-			} else if ("update".equals(operation)) {
-				QuantityUpdateCartForm cartForm = new QuantityUpdateCartForm();
-				BindingResult result = bind(cartForm, request);
-				if (!result.hasErrors()) {
-					messages.addAll(updateQuantities(cartForm));
-				} else {
-					messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected"));
-				}
-				
-			}
-		}
-	}
-	*/
 	
 	protected final Messages addItems(ShopContext shopContext, Collection<CartItem> cartItems) throws CartServiceException {
 		Messages messages = new MessagesImpl();
@@ -211,195 +188,195 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 		return messages;
 	}
 
-	protected final Messages updateQuantities(QuantityUpdateCartForm cartForm) throws CartServiceException {
-		ShopContext shopContext = ShopContextHolder.getInstance();
-		String shopCode = shopContext.getShopCode();
+//	protected final Messages updateQuantities(QuantityUpdateCartForm cartForm) throws CartServiceException {
+//		ShopContext shopContext = ShopContextHolder.getInstance();
+//		String shopCode = shopContext.getShopCode();
+//
+//		Customer customer = CustomerHelper.getCustomer();
+//		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
+//
+//		Messages messages = new MessagesImpl();
+//
+//		for (CartItemForm item : cartForm.getItems().values()) {
+//			if (item.getId() != null && item.getQuantity() != null) {
+//				messages.addAll(cartService.setQuantity(cart, item.getId(), new BigDecimal(item.getQuantity())));
+//			}
+//		}
+//
+//		cartService.calculate(shopContext, cart, customer);
+//
+//		try {
+//			cartService.saveCart(customer, cart);
+//		} catch (Exception e) {
+//		}
+//
+//		return messages;
+//	}
 
-		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 
-		Messages messages = new MessagesImpl();
-
-		for (CartItemForm item : cartForm.getItems().values()) {
-			if (item.getId() != null && item.getQuantity() != null) {
-				messages.addAll(cartService.setQuantity(cart, item.getId(), new BigDecimal(item.getQuantity())));
-			}
-		}
-
-		cartService.calculate(shopContext, cart, customer);
-
-		try {
-			cartService.saveCart(customer, cart);
-		} catch (Exception e) {
-		}
-
-		return messages;
-	}
-
-
-	protected final List<CartItem> getNewCartItems(AddToCartForm productListForm) {
-		List<CartItem> cartItems = new ArrayList<CartItem>();
-		try {
-			ShopContext cmsContext = ShopContextHolder.getInstance();
-			String shopCode = cmsContext.getShopCode();
-			String priceGroup = cmsContext.getCurrentPriceGroup();
-			Currency currency = Currency.getInstance(cmsContext.getCurrency());
-			Date date = new Date();
-			Customer customer = CustomerHelper.getCustomer();
-
-			Cart cart = CartHolder.getInstance(cartService, cmsContext, customer);
-			
-			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
-
-			Map<String, ProductForm> toBeRequested = new HashMap<String, ProductForm>();
-			for (Entry<String, ProductForm> e : productListForm.getProducts().entrySet()) {
-				if (!cart.getItems().containsKey(e.getKey())) {
-					toBeRequested.put(e.getKey(), e.getValue());
-				}
-			}
-			
-			List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
-					toBeRequested.keySet());
-			for (Product product : products) {
-				ProductForm productForm = toBeRequested.get(product.getGtin());
-			
-				BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
-						: productForm.getQuantity();
-			
-				CartItem cartItem = cart.getNewItem(product.getCode(), itemCount);
-				setCartItemAttributes(cartItem, product, cmsContext);
-
-				for (Option po : product.getOptions().values()) {
-					BigDecimal quantity = BigDecimal.ZERO;
-					if (productForm.getOptions().containsKey(po.getCode())) {
-						quantity = productForm.getOption(po.getCode()).getQuantity();
-					} else if (po.isRequired()) {
-						if (StringUtils.isNotEmpty(po.getComponentCode())) {
-							if (product.getComponents().containsKey(po.getComponentCode())) {
-								if (product.getComponent(po.getComponentCode()).isRequired()) {
-									quantity = po.getDefaultQty();
-								}
-							}
-						} else {
-							quantity = po.getDefaultQty();
-						}
-					}
-
-					if (quantity.compareTo(BigDecimal.ZERO) == 1) {
-						CartItem.Option cio = cartItem.newOption(po.getCode(), null);
-						cio.setGtin(po.getGtin());
-						cio.setQuantity(quantity);
-
-						Price price = po.getPrice(currency, priceGroup, date);
-						if (price != null) {
-							BigDecimal optionPrice = price.getValue();
-							cio.setUnitPrice("std", price.getValue());
-							cio.multiplyUnitPrices(cio.getQuantity());
-						}
-					}
-				}
-
-				// cart item price ---
-				// TODO: change price model in product to tagged prices
-				Price productPrice = product.getPrice(currency, priceGroup, date);
-				cartItem.setUnitPrice("std", productPrice.getValue());
-				cartItem.getOptions().forEach((k, o) -> {
-					cartItem.addUnitPrices(o.getUnitPrices());
-				});
-
-				cartItems.add(cartItem);
-			}			
-		} catch (Exception e) {
-			log.error(ExceptionUtils.getStackTrace(e));
-		}
-
-		return cartItems;
-	}
+//	protected final List<CartItem> getNewCartItems(AddToCartForm productListForm) {
+//		List<CartItem> cartItems = new ArrayList<CartItem>();
+//		try {
+//			ShopContext cmsContext = ShopContextHolder.getInstance();
+//			String shopCode = cmsContext.getShopCode();
+//			String priceGroup = cmsContext.getCurrentPriceGroup();
+//			Currency currency = Currency.getInstance(cmsContext.getCurrency());
+//			Date date = new Date();
+//			Customer customer = CustomerHelper.getCustomer();
+//
+//			Cart cart = CartHolder.getInstance(cartService, cmsContext, customer);
+//			
+//			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
+//
+//			Map<String, ProductForm> toBeRequested = new HashMap<String, ProductForm>();
+//			for (Entry<String, ProductForm> e : productListForm.getProducts().entrySet()) {
+//				if (!cart.getItems().containsKey(e.getKey())) {
+//					toBeRequested.put(e.getKey(), e.getValue());
+//				}
+//			}
+//			
+//			List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
+//					toBeRequested.keySet());
+//			for (Product product : products) {
+//				ProductForm productForm = toBeRequested.get(product.getGtin());
+//			
+//				BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
+//						: productForm.getQuantity();
+//			
+//				CartItem cartItem = cart.getNewItem(product.getCode(), itemCount);
+//				setCartItemAttributes(cartItem, product, cmsContext);
+//
+//				for (Option po : product.getOptions().values()) {
+//					BigDecimal quantity = BigDecimal.ZERO;
+//					if (productForm.getOptions().containsKey(po.getCode())) {
+//						quantity = productForm.getOption(po.getCode()).getQuantity();
+//					} else if (po.isRequired()) {
+//						if (StringUtils.isNotEmpty(po.getComponentCode())) {
+//							if (product.getComponents().containsKey(po.getComponentCode())) {
+//								if (product.getComponent(po.getComponentCode()).isRequired()) {
+//									quantity = po.getDefaultQty();
+//								}
+//							}
+//						} else {
+//							quantity = po.getDefaultQty();
+//						}
+//					}
+//
+//					if (quantity.compareTo(BigDecimal.ZERO) == 1) {
+//						CartItem.Option cio = cartItem.newOption(po.getCode(), null);
+//						cio.setGtin(po.getGtin());
+//						cio.setQuantity(quantity);
+//
+//						Price price = po.getPrice(currency, priceGroup, date);
+//						if (price != null) {
+//							BigDecimal optionPrice = price.getValue();
+//							cio.setUnitPrice("std", price.getValue());
+//							cio.multiplyUnitPrices(cio.getQuantity());
+//						}
+//					}
+//				}
+//
+//				// cart item price ---
+//				// TODO: change price model in product to tagged prices
+//				Price productPrice = product.getPrice(currency, priceGroup, date);
+//				cartItem.setUnitPrice("std", productPrice.getValue());
+//				cartItem.getOptions().forEach((k, o) -> {
+//					cartItem.addUnitPrices(o.getUnitPrices());
+//				});
+//
+//				cartItems.add(cartItem);
+//			}			
+//		} catch (Exception e) {
+//			log.error(ExceptionUtils.getStackTrace(e));
+//		}
+//
+//		return cartItems;
+//	}
 	
-	protected final List<CartItem> getCartItems(AddToCartForm productListForm) {
-		List<CartItem> cartItems = new ArrayList<CartItem>();
-		try {
-			ShopContext cmsContext = ShopContextHolder.getInstance();
-			String shopCode = cmsContext.getShopCode();
-			String priceGroup = cmsContext.getCurrentPriceGroup();
-			Currency currency = Currency.getInstance(cmsContext.getCurrency());
-			Date date = new Date();
-			
-			Customer customer = CustomerHelper.getCustomer();
-			
-			Cart cart = CartHolder.getInstance(cartService, cmsContext, customer);
-			
-			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
-			
-			Map<String, ProductForm> requestedProducts = new HashMap<String, ProductForm>(
-					productListForm.getProducts().size());
-			for (String key : productListForm.getProducts().keySet()) {
-				ProductForm product = productListForm.getProducts().get(key);
-				if (product.getQuantity().compareTo(BigDecimal.ZERO) == 1) {
-					requestedProducts.put(key, product);
-				}
-			}
-			
-			List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
-					requestedProducts.keySet());
-			for (Product product : products) {
-				ProductForm productForm = requestedProducts.get(product.getGtin());
-				
-				// get quantity either from global value or for individual
-				// items.
-				BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
-						: productForm.getQuantity();
-				
-				CartItem cartItem = cart.getNewItem(product.getCode(), itemCount);
-				setCartItemAttributes(cartItem, product, cmsContext);
-				
-				for (Option po : product.getOptions().values()) {
-					BigDecimal quantity = BigDecimal.ZERO;
-					if (productForm.getOptions().containsKey(po.getCode())) {
-						quantity = productForm.getOption(po.getCode()).getQuantity();
-					} else if (po.isRequired()) {
-						if (StringUtils.isNotEmpty(po.getComponentCode())) {
-							if (product.getComponents().containsKey(po.getComponentCode())) {
-								if (product.getComponent(po.getComponentCode()).isRequired()) {
-									quantity = po.getDefaultQty();
-								}
-							}
-						} else {
-							quantity = po.getDefaultQty();
-						}
-					}
-					
-					if (quantity.compareTo(BigDecimal.ZERO) == 1) {
-						CartItem.Option cio = cartItem.newOption(po.getCode(), null);
-						cio.setGtin(po.getGtin());
-						cio.setQuantity(quantity);
-						
-						Price price = po.getPrice(currency, priceGroup, date);
-						if (price != null) {
-							BigDecimal optionPrice = price.getValue();
-							cio.setUnitPrice("std", price.getValue());
-							cio.multiplyUnitPrices(cio.getQuantity());
-						}
-					}
-				}
-				
-				// cart item price ---
-				// TODO: change price model in product to tagged prices
-				Price productPrice = product.getPrice(currency, priceGroup, date);
-				cartItem.setUnitPrice("std", productPrice.getValue());
-				cartItem.getOptions().forEach((k, o) -> {
-					cartItem.addUnitPrices(o.getUnitPrices());
-				});
-				
-				cartItems.add(cartItem);
-			}
-			
-		} catch (Exception e) {
-			log.error(ExceptionUtils.getStackTrace(e));
-		}
-		
-		return cartItems;
-	}
+//	protected final List<CartItem> getCartItems(AddToCartForm productListForm) {
+//		List<CartItem> cartItems = new ArrayList<CartItem>();
+//		try {
+//			ShopContext cmsContext = ShopContextHolder.getInstance();
+//			String shopCode = cmsContext.getShopCode();
+//			String priceGroup = cmsContext.getCurrentPriceGroup();
+//			Currency currency = Currency.getInstance(cmsContext.getCurrency());
+//			Date date = new Date();
+//			
+//			Customer customer = CustomerHelper.getCustomer();
+//			
+//			Cart cart = CartHolder.getInstance(cartService, cmsContext, customer);
+//			
+//			BigDecimal globalQuantity = new BigDecimal(productListForm.getQuantity());
+//			
+//			Map<String, ProductForm> requestedProducts = new HashMap<String, ProductForm>(
+//					productListForm.getProducts().size());
+//			for (String key : productListForm.getProducts().keySet()) {
+//				ProductForm product = productListForm.getProducts().get(key);
+//				if (product.getQuantity().compareTo(BigDecimal.ZERO) == 1) {
+//					requestedProducts.put(key, product);
+//				}
+//			}
+//			
+//			List<Product> products = catalogService.rawByGtin(shopCode, Product.Status.PUBLISHED,
+//					requestedProducts.keySet());
+//			for (Product product : products) {
+//				ProductForm productForm = requestedProducts.get(product.getGtin());
+//				
+//				// get quantity either from global value or for individual
+//				// items.
+//				BigDecimal itemCount = (globalQuantity.compareTo(BigDecimal.ZERO) != 0) ? globalQuantity
+//						: productForm.getQuantity();
+//				
+//				CartItem cartItem = cart.getNewItem(product.getCode(), itemCount);
+//				setCartItemAttributes(cartItem, product, cmsContext);
+//				
+//				for (Option po : product.getOptions().values()) {
+//					BigDecimal quantity = BigDecimal.ZERO;
+//					if (productForm.getOptions().containsKey(po.getCode())) {
+//						quantity = productForm.getOption(po.getCode()).getQuantity();
+//					} else if (po.isRequired()) {
+//						if (StringUtils.isNotEmpty(po.getComponentCode())) {
+//							if (product.getComponents().containsKey(po.getComponentCode())) {
+//								if (product.getComponent(po.getComponentCode()).isRequired()) {
+//									quantity = po.getDefaultQty();
+//								}
+//							}
+//						} else {
+//							quantity = po.getDefaultQty();
+//						}
+//					}
+//					
+//					if (quantity.compareTo(BigDecimal.ZERO) == 1) {
+//						CartItem.Option cio = cartItem.newOption(po.getCode(), null);
+//						cio.setGtin(po.getGtin());
+//						cio.setQuantity(quantity);
+//						
+//						Price price = po.getPrice(currency, priceGroup, date);
+//						if (price != null) {
+//							BigDecimal optionPrice = price.getValue();
+//							cio.setUnitPrice("std", price.getValue());
+//							cio.multiplyUnitPrices(cio.getQuantity());
+//						}
+//					}
+//				}
+//				
+//				// cart item price ---
+//				// TODO: change price model in product to tagged prices
+//				Price productPrice = product.getPrice(currency, priceGroup, date);
+//				cartItem.setUnitPrice("std", productPrice.getValue());
+//				cartItem.getOptions().forEach((k, o) -> {
+//					cartItem.addUnitPrices(o.getUnitPrices());
+//				});
+//				
+//				cartItems.add(cartItem);
+//			}
+//			
+//		} catch (Exception e) {
+//			log.error(ExceptionUtils.getStackTrace(e));
+//		}
+//		
+//		return cartItems;
+//	}
 	
 	protected void setCartItemAttributes(CartItem cartItem, Product product, ShopContext shopContext) {
 		if (Product.Type.VPRODUCT.equals(product.getType())) {
@@ -430,16 +407,34 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 		}
 	}
 
-	public static class QuantityUpdateCartForm {
+	public static class CartForm {
+		public static final String MODE_ADD = "add";
+		public static final String MODE_SET = "set";
+		
+		private String mode = MODE_ADD;
+		private Integer defaultQuantity = 1;
 		private Map<String, CartItemForm> items = new HashMap<String, CartItemForm>();
 
+		public String getMode() {
+			return mode;
+		}
+		
+		public void setMode(String mode) {
+			this.mode = mode;
+		}
+		
+		public Integer getDefaultQuantity() {
+			return defaultQuantity;
+		}
+		
 		public Map<String, CartItemForm> getItems() {
 			return items;
 		}
-
+		
 		public static class CartItemForm {
 			private String id;
-			private Integer quantity;
+			private BigDecimal quantity;
+			private Map<String, OptionForm> options = new LinkedHashMap<>();
 
 			public CartItemForm(String id) {
 				this.id = id;
@@ -451,57 +446,6 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 
 			public void setId(String id) {
 				this.id = id;
-			}
-
-			public Integer getQuantity() {
-				return quantity;
-			}
-
-			public void setQuantity(Integer quantity) {
-				this.quantity = quantity;
-			}
-
-		}
-	}
-
-	public static class AddToCartForm {
-		private Integer quantity = 0;
-		private Map<String, ProductForm> products = new HashMap<String, ProductForm>();
-
-		public Integer getQuantity() {
-			return quantity;
-		}
-
-		public void setQuantity(Integer quantity) {
-			this.quantity = quantity;
-		}
-
-		public Map<String, ProductForm> getProducts() {
-			return products;
-		}
-
-		public void setProducts(Map<String, ProductForm> products) {
-			this.products = products;
-		}
-
-		public static class ProductForm {
-			private String gtin;
-			private BigDecimal quantity = BigDecimal.ONE;
-			private Map<String, OptionForm> options = new LinkedHashMap<>();
-
-			public ProductForm() {
-			}
-
-			public ProductForm(String gtin) {
-				setGtin(gtin);
-			}
-
-			public String getGtin() {
-				return gtin;
-			}
-
-			public void setGtin(String gtin) {
-				this.gtin = gtin;
 			}
 
 			public BigDecimal getQuantity() {
@@ -524,33 +468,32 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 				this.options = options;
 			}
 
-		}
+			public static class OptionForm {
+				private String code;
+				private BigDecimal quantity = BigDecimal.ONE;
 
-		public static class OptionForm {
-			private String code;
-			private BigDecimal quantity = BigDecimal.ONE;
+				public OptionForm() {
+				}
 
-			public OptionForm() {
-			}
+				public OptionForm(String gtin) {
+					this.code = gtin;
+				}
 
-			public OptionForm(String gtin) {
-				this.code = gtin;
-			}
+				public String getCode() {
+					return code;
+				}
 
-			public String getCode() {
-				return code;
-			}
+				public void setCode(String code) {
+					this.code = code;
+				}
 
-			public void setCode(String code) {
-				this.code = code;
-			}
+				public BigDecimal getQuantity() {
+					return quantity;
+				}
 
-			public BigDecimal getQuantity() {
-				return quantity;
-			}
-
-			public void setQuantity(BigDecimal quantity) {
-				this.quantity = quantity;
+				public void setQuantity(BigDecimal quantity) {
+					this.quantity = quantity;
+				}
 			}
 
 		}
