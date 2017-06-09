@@ -10,7 +10,7 @@
 	<artifactId>market-web</artifactId>
 	<name>web</name>
 	<packaging>jar</packaging>
-	<version>3.0.0</version>
+	<version>3.0.1-SNAPSHOT</version>
 	<properties>
 		<servlet-api.version>2.5</servlet-api.version>
 		<velocity.version>1.7</velocity.version>
