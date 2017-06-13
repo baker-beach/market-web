@@ -99,10 +99,11 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 			throw(e);
 		} finally {
 			cartService.calculate(shopContext, cart, customer);
+			cartService.saveCart(customer, cart);
 		}
 	}
 
-	private CartItem createNewCartItem(Cart cart, CartForm.CartItemForm form) throws CartServiceException {
+	protected CartItem createNewCartItem(Cart cart, CartForm.CartItemForm form) throws CartServiceException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		Currency currency = Currency.getInstance(shopContext.getCurrentCurrency().getIsoCode());
 		String priceGroup = shopContext.getCurrentPriceGroup();
@@ -114,7 +115,6 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 			// get implementation specific cartItem class ---
 			CartItem cartItem = cart.getNewItem(product.getCode(), BigDecimal.ZERO);
 			setCartItemAttributes(cartItem, product, shopContext);
-			
 			
 			// TODO
 			cartItem.setIsConfigurable(product.isConfigurable());
