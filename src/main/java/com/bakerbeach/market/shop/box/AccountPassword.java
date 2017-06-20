@@ -9,9 +9,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.FlashMap;
+import org.springframework.web.servlet.support.RequestContextUtils;
+
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
+import com.bakerbeach.market.cms.box.RedirectException;
+import com.bakerbeach.market.cms.model.Redirect;
 import com.bakerbeach.market.commons.FieldMessageImpl;
 import com.bakerbeach.market.commons.Message;
 import com.bakerbeach.market.commons.MessageImpl;
@@ -36,6 +41,8 @@ public class AccountPassword extends AbstractBox implements ProcessableBox {
 			throws ProcessableBoxException {
 
 		Messages messages = (Messages) modelMap.get("messages");
+		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
+		flashMap.put("messages", messages);
 		
 		Customer customer = CustomerHelper.getCustomer();
 
@@ -57,6 +64,7 @@ public class AccountPassword extends AbstractBox implements ProcessableBox {
 			} else {
 				getFieldErrors(result, messages);
 			}
+			throw new RedirectException(new Redirect(request.getHeader("Referer"), null, Redirect.RAW));
 		}
 
 	}
