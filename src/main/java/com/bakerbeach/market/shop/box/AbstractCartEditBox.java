@@ -203,18 +203,11 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 		cartItem.setBrand(product.getBrand());
 		cartItem.setTaxCode(product.getTaxCode());
 
-//		// TODO change price object structure ---
-//		Map<String, Price> currentPrices = catalogService.getCurrentPrices(product,
-//				java.util.Currency.getInstance(shopContext.getCurrentCurrency().getIsoCode()),
-//				shopContext.getCurrentPriceGroup(), new Date());
-//		Price price = currentPrices.get("std");
-//		cartItem.setUnitPrice("std", price.getValue());
-
-		cartItem.getTitle().put("title1", translationService.getMessage("product.cart.title1", "text",
+		cartItem.getTitle().put("title1", translationService.getMessage("product.cart.title.1", "text",
 				product.getGtin(), null, "product.cart.title1", shopContext.getCurrentLocale()));
-		cartItem.getTitle().put("title2", translationService.getMessage("product.cart.title2", "text",
+		cartItem.getTitle().put("title2", translationService.getMessage("product.cart.title.2", "text",
 				product.getGtin(), null, "product.cart.title2", shopContext.getCurrentLocale()));
-		cartItem.getTitle().put("title3", translationService.getMessage("product.cart.title3", "text",
+		cartItem.getTitle().put("title3", translationService.getMessage("product.cart.title.3", "text",
 				product.getGtin(), null, "product.cart.title3", shopContext.getCurrentLocale()));
 
 		List<Asset> assets = product.getAssets("listing", "s");
