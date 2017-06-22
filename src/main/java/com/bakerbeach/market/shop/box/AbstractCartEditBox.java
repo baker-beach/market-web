@@ -114,6 +114,8 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 			
 			// get implementation specific cartItem class ---
 			CartItem cartItem = cart.getNewItem(product.getCode(), BigDecimal.ZERO);
+			cartItem.setMinQty(product.getMinQty());
+			cartItem.setMaxQty(product.getMaxQty());
 			setCartItemAttributes(cartItem, product, shopContext);
 			
 			// TODO
