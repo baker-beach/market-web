@@ -21,7 +21,6 @@ public class UrlRewriteFilter extends AbstractContextFilter {
 	private UrlRewriter inboundUrlRewriter;
 	private UrlRewriter outboundUrlRewriter;
 
-	@SuppressWarnings("unused")
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 
 		final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
@@ -32,17 +31,16 @@ public class UrlRewriteFilter extends AbstractContextFilter {
 			chain.doFilter(httpServletRequest, response);
 		} else {
 			UrlRewriteResponse urlRewriteResponse = new UrlRewriteResponse(httpServletResponse, httpServletRequest, outboundUrlRewriter);
-
+			
+			if (request.getAttribute("x-path") == null) {
 				boolean requestRewritten = inboundUrlRewriter.processRequest(httpServletRequest, urlRewriteResponse, chain);
+				if (!requestRewritten) {
+					chain.doFilter(httpServletRequest, urlRewriteResponse);
+				}
+			} else {
 				chain.doFilter(httpServletRequest, urlRewriteResponse);
-//			if (request.getAttribute("x-path") == null) {
-//				boolean requestRewritten = inboundUrlRewriter.processRequest(httpServletRequest, urlRewriteResponse, chain);
-//				if (!requestRewritten) {
-//					chain.doFilter(httpServletRequest, urlRewriteResponse);
-//				}
-//			} else {
-//				chain.doFilter(httpServletRequest, urlRewriteResponse);
-//			}
+			}
+					
 		}
 	}
 
