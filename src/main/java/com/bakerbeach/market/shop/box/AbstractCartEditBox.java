@@ -206,11 +206,11 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 		cartItem.setTaxCode(product.getTaxCode());
 
 		cartItem.getTitle().put("title1", translationService.getMessage("product.cart.title.1", "text",
-				product.getGtin(), null, "product.cart.title1", shopContext.getCurrentLocale()));
+				product.getGtin(), null, "", shopContext.getCurrentLocale()));
 		cartItem.getTitle().put("title2", translationService.getMessage("product.cart.title.2", "text",
-				product.getGtin(), null, "product.cart.title2", shopContext.getCurrentLocale()));
+				product.getGtin(), null, "", shopContext.getCurrentLocale()));
 		cartItem.getTitle().put("title3", translationService.getMessage("product.cart.title.3", "text",
-				product.getGtin(), null, "product.cart.title3", shopContext.getCurrentLocale()));
+				product.getGtin(), null, "", shopContext.getCurrentLocale()));
 
 		List<Asset> assets = product.getAssets("listing", "s");
 		if (CollectionUtils.isNotEmpty(assets)) {
