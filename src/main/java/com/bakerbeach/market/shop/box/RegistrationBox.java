@@ -96,17 +96,16 @@ public class RegistrationBox extends AbstractLoginBox {
 						shopCodesOnRegistration.addAll(shopContext.getGroupCodes());
 					}
 					
-					customer = customerService.register(registerForm.getRegisterEmail(),
-							registerForm.getRegisterPassword(), shopCodesOnRegistration);
-
+					String firstName = "";
 					if (!StringUtils.isEmpty(registerForm.getRegisterFirstName()))
-						customer.setFirstName(registerForm.getRegisterFirstName());
-
-					if (!StringUtils.isEmpty(registerForm.getRegisterMiddleName()))
-						customer.setMiddleName(registerForm.getRegisterMiddleName());
-
+						firstName = registerForm.getRegisterFirstName();
+					
+					String lastName = "";
 					if (!StringUtils.isEmpty(registerForm.getRegisterLastName()))
-						customer.setLastName(registerForm.getRegisterLastName());
+						lastName = registerForm.getRegisterLastName();
+					
+					customer = customerService.register(registerForm.getRegisterEmail(),
+							registerForm.getRegisterPassword(), shopCodesOnRegistration, firstName, lastName);
 
 					customerService.update(customer);
 
