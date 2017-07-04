@@ -92,9 +92,10 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 				String template = group.getTemplate();
 				if (StringUtils.isNotBlank(template)) {
 					getData().put("template", template);
-				} else {
-					getData().put("template", DEFAULT_PRODUCT_DETAIL_TEMPLATE);
 				}
+//				else {
+//					getData().put("template", DEFAULT_PRODUCT_DETAIL_TEMPLATE);
+//				}
 
 				setActiveMember(request, group, modelMap);
 
