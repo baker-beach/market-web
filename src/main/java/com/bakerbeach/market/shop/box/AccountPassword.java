@@ -1,5 +1,7 @@
 package com.bakerbeach.market.shop.box;
 
+import java.awt.TrayIcon.MessageType;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -49,20 +51,21 @@ public class AccountPassword extends AbstractBox implements ProcessableBox {
 		if (request.getMethod().equals(RequestMethod.POST.toString())) {
 			PasswordForm passwordForm = new PasswordForm();
 			BindingResult result = bind(passwordForm, request);
-
+			
 			if (!result.hasErrors()) {
 				if (passwordForm.getNewPassword().equals(passwordForm.getCheckNewPassword())) {
 					try {
 						customerService.changePassword(customer, passwordForm.getNewPassword());
-						messages.addGlobalMessage(new MessageImpl("password.success"));
+						messages.addGlobalMessage(new MessageImpl(Message.TYPE_INFO, "password.success"));
 					} catch (CustomerServiceException e) {
-						messages.addGlobalError(new MessageImpl("password.error.save"));
+						messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR,"password.error.save"));
 					}
 				} else {
 					messages.addFieldError(new FieldMessageImpl("checkNewPassword",Message.TYPE_ERROR,"password.error.checkNewPassword"));
 				}
 			} else {
 				getFieldErrors(result, messages);
+				flashMap.put("password", passwordForm);
 			}
 			throw new RedirectException(new Redirect(request.getHeader("Referer"), null, Redirect.RAW));
 		}
