@@ -212,7 +212,7 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 		cartItem.getTitle().put("title3", translationService.getMessage("product.cart.title.3", "text",
 				product.getGtin(), null, "", shopContext.getCurrentLocale()));
 
-		List<Asset> assets = product.getAssets("listing", "s");
+		List<Asset> assets = product.getAssets("std", "cart");
 		if (CollectionUtils.isNotEmpty(assets)) {
 			cartItem.getImages().put("img1", assets.get(0).getPath());
 		}
