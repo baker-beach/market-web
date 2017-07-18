@@ -31,6 +31,7 @@ import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.CartItem;
 import com.bakerbeach.market.core.api.model.CartItemQualifier;
 import com.bakerbeach.market.core.api.model.Customer;
+import com.bakerbeach.market.core.api.model.ProductType;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CustomerHelper;
@@ -201,7 +202,7 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 		} else {
 			cartItem.setQualifier(CartItemQualifier.PRODUCT);
 		}
-
+		cartItem.setType(ProductType.valueOf(product.getUnit().toString()));
 		cartItem.setBrand(product.getBrand());
 		cartItem.setTaxCode(product.getTaxCode());
 
