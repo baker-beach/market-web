@@ -205,10 +205,12 @@ public class CheckoutAddressBox extends AbstractCheckoutStepBox{
 					shippingAddress.getTags().add(CustomerAddress.TAG_DEFAULT_SHIPPING_ADDRESS);
 				}
 
-				if (!addressCheckEngine.checkAddress(billingAddress, messages))
+				if (!addressCheckEngine.checkAddress(billingAddress, messages)) {
+					isValid = false;					
+				}
+				if (!addressCheckEngine.checkAddress(shippingAddress, messages) && addressForm.isUseShipping()) {
 					isValid = false;
-				if (!addressCheckEngine.checkAddress(shippingAddress, messages))
-					isValid = false;
+				}
 
 				Customer customer = CustomerHelper.getCustomer();
 				shippingAddress.setCustomerId(customer.getId());
