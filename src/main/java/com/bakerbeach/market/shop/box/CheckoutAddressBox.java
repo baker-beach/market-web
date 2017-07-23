@@ -206,10 +206,16 @@ public class CheckoutAddressBox extends AbstractCheckoutStepBox{
 				}
 
 				if (!addressCheckEngine.checkAddress(billingAddress, messages)) {
-					isValid = false;					
+					isValid = false;	
+					if (messages.getFieldError("billingAddress.telephone") == null) {
+						messages.addFieldError(new FieldMessageImpl("billingAddress.telephone", Message.TYPE_ERROR, "address.error.telephone"));					
+					}
 				}
 				if (!addressCheckEngine.checkAddress(shippingAddress, messages) && addressForm.isUseShipping()) {
 					isValid = false;
+					if (messages.getFieldError("shippingAddress.telephone") == null) {
+						messages.addFieldError(new FieldMessageImpl("shippingAddress.telephone", Message.TYPE_ERROR, "address.error.telephone"));					
+					}
 				}
 
 				Customer customer = CustomerHelper.getCustomer();
