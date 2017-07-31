@@ -17,6 +17,7 @@ import org.joda.time.Days;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.bakerbeach.market.cms.service.CmsContextHolder;
 import com.bakerbeach.market.cms.service.Helper;
 import com.bakerbeach.market.commons.Sanitization;
 import com.bakerbeach.market.core.api.model.Customer;
@@ -85,6 +86,22 @@ public class ShopHelper extends Helper {
 		} else {
 			return null;
 		}
+	}
+	
+	public static String nf(Object number, String locale) {
+		if (number != null) {
+			NumberFormat nf = NumberFormat.getInstance(new Locale(locale));
+			nf.setMaximumFractionDigits(2);
+			nf.setMinimumFractionDigits(2);
+			nf.setMinimumIntegerDigits(1);
+			return nf.format(number);
+		} else {
+			return null;
+		}
+	}
+	
+	public static String resourceUrlFeed(String key) {
+		return url("/resources"+key);
 	}
 	
 	public static String tf(Object dateOrTime, String pattern) {
