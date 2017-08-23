@@ -1,6 +1,7 @@
 package com.bakerbeach.market.shop.box;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -110,16 +111,16 @@ public class RegistrationBox extends AbstractLoginBox {
 					customerService.update(customer);
 
 				} catch (CustomerServiceException e) {
-					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "register.error"));
+					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "register.error", Arrays.asList(Message.TAG_BOX)));
 					throw new RedirectException(new Redirect(request.getHeader("Referer"), null, Redirect.RAW));
 				}
 				try {
 					doLogin(registerForm.getRegisterEmail(), registerForm.getRegisterPassword(),true);
 				} catch (AuthenticationException ae) {
-					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "login.error"));
+					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "login.error", Arrays.asList(Message.TAG_BOX)));
 					throw new RedirectException(new Redirect(request.getHeader("Referer"), null, Redirect.RAW));
 				}
-				messages.addGlobalInfo(new MessageImpl(Message.TYPE_INFO, "registration.success"));
+				messages.addGlobalInfo(new MessageImpl(Message.TYPE_INFO, "registration.success", Arrays.asList(Message.TAG_BOX)));
 
 				newsletterSubscription(request, flashMap, customer);
 				

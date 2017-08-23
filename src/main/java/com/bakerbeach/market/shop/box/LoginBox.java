@@ -1,5 +1,7 @@
 package com.bakerbeach.market.shop.box;
 
+import java.util.Arrays;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -54,11 +56,11 @@ public class LoginBox extends AbstractLoginBox {
 						redirect = new Redirect(login.getTargetUrlId(), null, Redirect.URL_ID);						
 					}
 
-					messages.addGlobalError(new MessageImpl(Message.TYPE_INFO, "login.success"));
+					messages.addGlobalError(new MessageImpl(Message.TYPE_INFO, "login.success", Arrays.asList(Message.TAG_BOX)));
 					
 					throw new RedirectException(redirect);
 				} catch (AuthenticationException e) {
-					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "login.error"));
+					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "login.error", Arrays.asList(Message.TAG_BOX)));
 				}
 			} else {
 				getFieldErrors(result, messages);

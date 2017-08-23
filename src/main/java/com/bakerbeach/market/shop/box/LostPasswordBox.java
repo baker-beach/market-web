@@ -1,5 +1,7 @@
 package com.bakerbeach.market.shop.box;
 
+import java.util.Arrays;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -55,14 +57,14 @@ public class LostPasswordBox extends AbstractBox implements ProcessableBox {
 				try {
 					ShopContext shopContext = ShopContextHolder.getInstance();
 					customerService.renewPassword(form.getEmail(), shopContext.getShopCode());
-					messages.add(new MessageImpl(Message.TYPE_INFO, "newPassword.success"));
+					messages.add(new MessageImpl(Message.TYPE_INFO, "newPassword.success", Arrays.asList(Message.TAG_BOX)));
 					
 					throw new RedirectException(new Redirect("login-password", null, Redirect.URL_ID));
 				} catch (CustomerNotFoundException e) {
-					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "newPassword.error.customerNotfound"));					
+					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "newPassword.error.customerNotfound", Arrays.asList(Message.TAG_BOX)));					
 				} catch (CustomerServiceException e) {
 					log.error(ExceptionUtils.getStackTrace(e));
-					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "newPassword.error"));
+					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "newPassword.error", Arrays.asList(Message.TAG_BOX)));
 				}
 			} else {
 				getFieldErrors(result, messages);

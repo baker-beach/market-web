@@ -93,7 +93,7 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 				});
 				
 			} else {
-				messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected"));
+				messages.add(new MessageImpl(Message.TYPE_ERROR, "unexpected", Arrays.asList(Message.TAG_BOX)));
 			}
 
 		} catch (Exception e) {
@@ -190,7 +190,7 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 			cartService.saveCart(customer, cart);
 		} catch (Exception e) {
 			log.error(ExceptionUtils.getStackTrace(e));
-			messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "addItems.error"));			
+			messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "addItems.error", Arrays.asList(Message.TAG_BOX)));			
 		}
 
 		return messages;
