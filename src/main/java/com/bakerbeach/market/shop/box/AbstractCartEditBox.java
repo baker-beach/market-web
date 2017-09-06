@@ -78,14 +78,14 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 							}
 							
 							Messages msgs = cartService.setQuantity(cart, k, quantity);
-							messages.addAll(msgs);
+							messages.add(msgs);
 						} else {
 							CartItem item = createNewCartItem(cart, v);
 
 							item.setQuantity(quantity);
 
 							Messages msgs = cartService.addCartItem(shopContext, cart, item);
-							messages.addAll(msgs);
+							messages.add(msgs);
 						}
 					} catch (CartServiceException e) {
 						log.warn(ExceptionUtils.getStackTrace(e));
@@ -183,7 +183,7 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 
 
 			for (CartItem cartItem : cartItems) {
-				messages.addAll(cartService.addCartItem(shopContext, cart, cartItem));
+				messages.add(cartService.addCartItem(shopContext, cart, cartItem));
 			}
 
 			cartService.calculate(shopContext, cart, customer);

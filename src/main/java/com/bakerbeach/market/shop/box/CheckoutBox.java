@@ -139,8 +139,6 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 		}
 	}
 
-
-
 	private void initCheckout(ShopContext shopContext, Customer customer, Cart cart) {
 
 		try {
