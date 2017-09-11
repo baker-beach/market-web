@@ -99,7 +99,7 @@ public abstract class AbstractCartEditBox extends AbstractBox implements Process
 		} catch (Exception e) {
 			throw(e);
 		} finally {
-			cartService.calculate(shopContext, cart, customer);
+			cartService.calculate(shopContext, cart, customer, messages);
 			cartService.saveCart(customer, cart);
 		}
 	}
