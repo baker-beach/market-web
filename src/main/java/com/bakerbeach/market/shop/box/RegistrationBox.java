@@ -121,7 +121,8 @@ public class RegistrationBox extends AbstractLoginBox {
 					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "login.error"));
 					throw new RedirectException(new Redirect(request.getHeader("Referer"), null, Redirect.RAW));
 				}
-				messages.addGlobalInfo(new MessageImpl(Message.TYPE_INFO, "registration.success"));
+				messages.addGlobalInfo(new MessageImpl("registration", Message.TYPE_INFO, "registration.success",
+						Arrays.asList(Message.TAG_BOX), Arrays.asList()));
 
 				newsletterSubscription(request, flashMap, customer);
 
