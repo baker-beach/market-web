@@ -52,8 +52,6 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	private String protocol;
 	private String pageId;
 	private FilterList filterList;
-	private Map<String, Object> reguestData = new HashMap<String, Object>();
-	private Map<String, Object> sessionData = new HashMap<String, Object>();
 	private Map<String, Currency> currencies = new HashMap<String, Currency>();
 	private String defaultCurrency;
 	private List<Locale> locales;
@@ -78,6 +76,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	private String gtmId;
 	private String defaultPageId;
 	private PaymentInfo paymentInfo;
+	private Map<String, Object> requestData = new HashMap<String, Object>();
 
 	private String CURRENT_CURRENCY = "CURRENT_CURRENCY";
 
@@ -121,9 +120,8 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 		if (urlMappingInfo != null) {
 			String pageId = (String) urlMappingInfo.get("page_id");
 			setPageId(pageId);
-			setData((Map<String, Object>) urlMappingInfo.get("data"));
+			requestData.putAll((Map<String, Object>) urlMappingInfo.get("data"));
 		}
-
 		return this;
 	}
 
@@ -141,17 +139,17 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public List<String> getGroupCodes() {
 		return groupCodes;
 	}
-	
+
 	@Override
 	public void setGroupCodes(List<String> groupCodes) {
 		this.groupCodes = groupCodes;
 	}
-	
+
 	@Override
 	public void setGroupCodesString(String groupCodesString) {
 		this.groupCodes = Arrays.asList(groupCodesString.split(","));
 	}
-	
+
 	@Override
 	public String getOrderSequenceCode() {
 		return orderSequenceCode;
@@ -230,40 +228,6 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	@Override
 	public void setFilterList(FilterList filterList) {
 		this.filterList = filterList;
-	}
-
-	@Override
-	public Map<String, Object> getData() {
-		return getRequestData();
-	}
-
-	@Override
-	public void setData(Map<String, Object> data) {
-		setReguestData(data);
-	}
-
-	@Override
-	public Map<String, Object> getRequestData() {
-		return reguestData;
-	}
-
-	public void setReguestData(Map<String, Object> data) {
-		if (data != null)
-			this.reguestData = data;
-		else
-			this.reguestData = new HashMap<String, Object>();
-	}
-
-	@Override
-	public Map<String, Object> getSessionData() {
-		return sessionData;
-	}
-
-	public void setSessionData(Map<String, Object> data) {
-		if (data != null)
-			this.sessionData = data;
-		else
-			this.reguestData = new HashMap<String, Object>();
 	}
 
 	@Override
@@ -588,18 +552,18 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	}
 
 	public String getLeftCurrencySymbol() {
-		if (isCurrencySymbolAtFront()) {
-			return getCurrencySymbol() + "&nbsp;";
+		if (getCurrentCurrency().isCurrencySymbolAtFront()) {
+			return getCurrentCurrency().getSymbol() + "&nbsp;";
 		} else {
 			return "";
 		}
 	}
 
 	public String getRightCurrencySymbol() {
-		if (isCurrencySymbolAtFront()) {
+		if (getCurrentCurrency().isCurrencySymbolAtFront()) {
 			return "";
 		} else {
-			return getCurrencySymbol() + "&nbsp;";
+			return getCurrentCurrency().getSymbol() + "&nbsp;";
 		}
 	}
 
@@ -619,24 +583,9 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 		this.paymentInfo = paymentInfo;
 	}
 
-	@Override
-	public String getApplicationPath() {
-		String p = this.getHttpServletRequest().isSecure() ? "https" : "http";
-		StringBuilder path = new StringBuilder(p);
-		try {
-			path.append("://").append(host).append(":")
-					.append(("http".equals(p)) ? this.getPort() : this.getSecurePort())
-					.append(UrlHelper.getContextPath(httpServletRequest, httpServletRequest.getCharacterEncoding()));
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return path.toString();
-	}
-
 	public Currency getCurrentCurrency() {
-		if (getSessionData().containsKey(CURRENT_CURRENCY))
-			return currencies.get(getSessionData().get(CURRENT_CURRENCY));
+		if (httpServletRequest.getSession().getAttribute(CURRENT_CURRENCY) != null)
+			return currencies.get(httpServletRequest.getSession().getAttribute(CURRENT_CURRENCY));
 		else
 			return currencies.get(defaultCurrency);
 
@@ -644,23 +593,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	@Override
 	public void setCurrency(String currency) {
-		if (currencies.containsKey(currency))
-			getSessionData().put(CURRENT_CURRENCY, currency);
-	}
-
-	@Override
-	public String getCurrency() {
-		return getCurrentCurrency().getIsoCode();
-	}
-
-	@Override
-	public Boolean isCurrencySymbolAtFront() {
-		return getCurrentCurrency().isCurrencySymbolAtFront();
-	}
-
-	@Override
-	public String getCurrencySymbol() {
-		return getCurrentCurrency().getSymbol();
+		httpServletRequest.getSession().setAttribute(CURRENT_CURRENCY, currency);
 	}
 
 	public String getDefaultCurrency() {
@@ -678,5 +611,13 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public void setCurrencies(Map<String, Currency> currencies) {
 		this.currencies = currencies;
 	}
-	
+
+	public Map<String, Object> getRequestData() {
+		return requestData;
+	}
+
+	public void setRequestData(Map<String, Object> requestData) {
+		this.requestData = requestData;
+	}
+
 }

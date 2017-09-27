@@ -51,7 +51,7 @@ public class XProductListBox extends AbstractXProductListBox implements Processa
 		parameterUnion.putAll(queryParameter);
 
 		String priceGroup = cmsContext.getCurrentPriceGroup();
-		Currency currency = Currency.getInstance(cmsContext.getCurrency());
+		Currency currency = Currency.getInstance(cmsContext.getCurrentCurrency().getIsoCode());
 		String countryOfDelivery = cmsContext.getCountryOfDelivery();
 		Date date = new Date();
 

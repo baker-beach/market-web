@@ -35,10 +35,6 @@ import com.bakerbeach.market.xcatalog.service.XCatalogService;
 public class XProductBox extends AbstractBox implements ProcessableBox {
 	private static final long serialVersionUID = 1L;
 
-	private static final String DEFAULT_PRODUCT_DETAIL_TEMPLATE = "product-detail";
-
-	// private ShopProduct product = null;
-
 	@Autowired
 	@Qualifier("catalogService")
 	protected XCatalogService cs;
@@ -49,7 +45,6 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 	@Autowired
 	protected TranslationService translationService;
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap)
 			throws ProcessableBoxException {
@@ -60,7 +55,7 @@ public class XProductBox extends AbstractBox implements ProcessableBox {
 			try {
 				Locale locale = context.getCurrentLocale();
 				String priceGroup = context.getCurrentPriceGroup();
-				Currency currency = Currency.getInstance(context.getCurrency());
+				Currency currency = Currency.getInstance(context.getCurrentCurrency().getIsoCode());
 				String countryOfDelivery = context.getCountryOfDelivery();
 				String shopCode = context.getShopCode();
 				Date date = new Date();
