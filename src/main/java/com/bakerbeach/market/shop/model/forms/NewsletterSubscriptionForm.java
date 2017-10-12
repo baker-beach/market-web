@@ -1,9 +1,10 @@
 package com.bakerbeach.market.shop.model.forms;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NewsletterSubscriptionForm {
+public class NewsletterSubscriptionForm implements Serializable{
 	
 	List<FormEntry> newsletter = new ArrayList<>();
 	

@@ -13,7 +13,7 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
-import com.bakerbeach.market.cms.model.CmsContext;
+import com.bakerbeach.market.cms.model.RequestContext;
 import com.bakerbeach.market.cms.service.CmsContextHolder;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.customer.api.service.CustomerService;
@@ -33,7 +33,7 @@ public class CustomerServiceRealm extends AuthorizingRealm {
 	@Override
 	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
 		try {
-			CmsContext cmsContext = CmsContextHolder.getInstance();
+			RequestContext cmsContext = CmsContextHolder.getInstance();
 			if (token instanceof UsernamePasswordToken) {
 				UsernamePasswordToken usernamePasswordToken = (UsernamePasswordToken) token;
 

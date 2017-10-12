@@ -92,7 +92,6 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 
 	private void doOrder(HttpServletRequest request) throws ProcessableBoxException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		String shopCode = shopContext.getShopCode();
 		Customer customer = CustomerHelper.getCustomer();
 		
 		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);

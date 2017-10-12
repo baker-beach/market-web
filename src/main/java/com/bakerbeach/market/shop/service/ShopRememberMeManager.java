@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import com.bakerbeach.market.cms.model.CmsContext;
+import com.bakerbeach.market.cms.model.RequestContext;
 import com.bakerbeach.market.cms.service.CmsContextHolder;
 import com.bakerbeach.market.commons.ServiceException;
 import com.bakerbeach.market.core.api.model.Customer;
@@ -162,7 +162,7 @@ public class ShopRememberMeManager extends CookieRememberMeManager {
 			}
 
 			Customer customer;
-			CmsContext cmsContext = CmsContextHolder.getInstance();
+			RequestContext cmsContext = CmsContextHolder.getInstance();
 			customer = customerService.findByEmail(cookieTokens[0],cmsContext.getAppCode());
 			// TODO: check against encoded password
 			return customer;

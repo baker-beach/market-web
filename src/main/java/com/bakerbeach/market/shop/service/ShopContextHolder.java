@@ -10,13 +10,13 @@ public class ShopContextHolder {
 
 	public static ShopContext getInstance() {
 		RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-		ShopContext shopContext = (ShopContext) requestAttributes.getAttribute(CmsContextHolder.CMS_CONTEXT_REQUEST_ATTRIBUTES_KEY, RequestAttributes.SCOPE_SESSION);
+		ShopContext shopContext = (ShopContext) requestAttributes.getAttribute(CmsContextHolder.CMS_CONTEXT_REQUEST_ATTRIBUTES_KEY, RequestAttributes.SCOPE_REQUEST);
 		return shopContext;
 	}
 
 	public static void setInstance(ShopContext shopContext) {
 		RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-		requestAttributes.setAttribute(CmsContextHolder.CMS_CONTEXT_REQUEST_ATTRIBUTES_KEY, shopContext, RequestAttributes.SCOPE_SESSION);
+		requestAttributes.setAttribute(CmsContextHolder.CMS_CONTEXT_REQUEST_ATTRIBUTES_KEY, shopContext, RequestAttributes.SCOPE_REQUEST);
 	}
 
 }

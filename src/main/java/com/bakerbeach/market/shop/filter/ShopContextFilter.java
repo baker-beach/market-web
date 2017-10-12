@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 
-import com.bakerbeach.market.cms.service.UrlHelper;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.ShopContextFactory;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
@@ -31,22 +30,8 @@ public class ShopContextFilter extends AbstractContextFilter {
 			chain.doFilter(httpServletRequest, httpServletResponse);
 		} else {
 			try {
-				String host = UrlHelper.getHost(httpServletRequest);
-				String path = UrlHelper.getPathWithinApplication(httpServletRequest);
-
-				ShopContext shopContext = ShopContextHolder.getInstance();
-				if (shopContext == null) {
-					shopContext = shopContextFactory.newInstance(host, path);
-					shopContext.setProtocol(UrlHelper.getProtocol(httpServletRequest));
-					ShopContextHolder.setInstance(shopContext);
-				} else {
-					shopContext.setHost(host);
-					shopContext.setPath(path);
-					shopContext.setProtocol(UrlHelper.getProtocol(httpServletRequest));
-					shopContext.setFilterList(null);
-					shopContext.setPageId(null);
-				}
-			
+				ShopContext shopContext = shopContextFactory.newInstance(httpServletRequest, httpServletResponse);
+				ShopContextHolder.setInstance(shopContext);
 				chain.doFilter(httpServletRequest, httpServletResponse);
 			} catch (Exception e) {
  				LOG.error(ExceptionUtils.getStackTrace(e));

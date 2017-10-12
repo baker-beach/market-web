@@ -1,9 +1,11 @@
 package com.bakerbeach.market.shop.model.forms;
 
+import java.io.Serializable;
+
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotEmpty;
 
-public class Login {
+public class Login implements Serializable {
 	private String loginEmail;
 	private String loginPassword;
 	private Boolean subscription = false;

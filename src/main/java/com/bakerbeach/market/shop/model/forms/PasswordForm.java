@@ -1,8 +1,10 @@
 package com.bakerbeach.market.shop.model.forms;
 
+import java.io.Serializable;
+
 import org.hibernate.validator.constraints.Length;
 
-public class PasswordForm {
+public class PasswordForm implements Serializable{
 
 	private String oldPassword;
 	private String newPassword;

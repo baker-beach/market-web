@@ -17,7 +17,7 @@ import org.apache.commons.lang3.LocaleUtils;
 import org.springframework.ui.ModelMap;
 
 import com.bakerbeach.market.cms.model.Breadcrumbs;
-import com.bakerbeach.market.cms.model.CmsContext;
+import com.bakerbeach.market.cms.model.RequestContext;
 import com.bakerbeach.market.cms.model.UrlMappingInfo;
 import com.bakerbeach.market.cms.service.UrlHelper;
 import com.bakerbeach.market.core.api.model.Address;
@@ -29,7 +29,7 @@ import com.bakerbeach.market.core.service.order.model.OrderStatus;
 import com.bakerbeach.market.payment.api.model.PaymentInfo;
 import com.bakerbeach.market.shop.service.ShopHelper;
 
-public class ShopContextImpl implements ShopContext, CmsContext {
+public class ShopContextImpl implements ShopContext, RequestContext {
 
 	private static final long serialVersionUID = 1L;
 
@@ -59,15 +59,14 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	private Locale currentLocale;
 	private List<String> priceGroups;
 	private String defaultPriceGroup;
-	private String currentPriceGroup;
+	
 	private List<String> validCountries;
 	private String defaultCountryOfDelivery;
 	private String deviceClass;
-	private Address billingAddress;
-	private Address shippingAddress;
+
 	private String orderStatus = OrderStatus.POST_FRAUD;
-	private String orderId;
-	private Set<Integer> validSteps = new HashSet<Integer>();
+	
+//	private Set<Integer> validSteps = new HashSet<Integer>();
 	private List<String> newsletterIds;
 	private String remoteIp;
 	private Breadcrumbs breadcrumbs;
@@ -75,7 +74,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	private String device;
 	private String gtmId;
 	private String defaultPageId;
-	private PaymentInfo paymentInfo;
+
 	private Map<String, Object> requestData = new HashMap<String, Object>();
 
 	private String CURRENT_CURRENCY = "CURRENT_CURRENCY";
@@ -116,7 +115,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public CmsContext refine(UrlMappingInfo urlMappingInfo) {
+	public RequestContext refine(UrlMappingInfo urlMappingInfo) {
 		if (urlMappingInfo != null) {
 			String pageId = (String) urlMappingInfo.get("page_id");
 			setPageId(pageId);
@@ -618,6 +617,23 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	public void setRequestData(Map<String, Object> requestData) {
 		this.requestData = requestData;
+	}
+
+	@Override
+	public String getApplicationPath() {
+		StringBuilder path = new StringBuilder(protocol.toLowerCase());
+		try {
+			path.append("://").append(host).append(":").append(port)
+					.append(UrlHelper.getContextPath(httpServletRequest, httpServletRequest.getCharacterEncoding()));
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return path.toString();
+	}
+	
+	private Map<String, Object> getSessionData(){
+		
 	}
 
 }

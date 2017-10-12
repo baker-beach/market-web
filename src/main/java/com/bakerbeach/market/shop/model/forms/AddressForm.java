@@ -1,12 +1,14 @@
 package com.bakerbeach.market.shop.model.forms;
 
+import java.io.Serializable;
+
 import javax.validation.Valid;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.bakerbeach.market.core.api.model.Address;
 
-public class AddressForm {
+public class AddressForm implements Serializable{
 
 	@Valid
 	public AddressFormAddress shippingAddress;

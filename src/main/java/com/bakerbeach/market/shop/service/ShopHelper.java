@@ -17,7 +17,7 @@ import org.joda.time.Days;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.bakerbeach.market.cms.model.CmsContext;
+import com.bakerbeach.market.cms.model.RequestContext;
 import com.bakerbeach.market.cms.service.Helper;
 import com.bakerbeach.market.commons.Sanitization;
 import com.bakerbeach.market.core.api.model.Customer;
@@ -32,7 +32,7 @@ import com.bakerbeach.market.order.api.model.OrderItem;
 @Scope("prototype")
 public class ShopHelper extends Helper {
 		
-	public ShopHelper(CmsContext context) {
+	public ShopHelper(RequestContext context) {
 		super(context);
 	}
 

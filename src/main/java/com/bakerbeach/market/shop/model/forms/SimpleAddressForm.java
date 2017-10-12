@@ -1,10 +1,12 @@
 package com.bakerbeach.market.shop.model.forms;
 
+import java.io.Serializable;
+
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.bakerbeach.market.core.api.model.Address;
 
-public class SimpleAddressForm {
+public class SimpleAddressForm implements Serializable{
 	public String id;
 	public String prefix;
 	public String firstName;

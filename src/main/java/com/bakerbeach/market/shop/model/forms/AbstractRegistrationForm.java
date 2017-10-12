@@ -1,11 +1,13 @@
 package com.bakerbeach.market.shop.model.forms;
 
+import java.io.Serializable;
+
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
-public class AbstractRegistrationForm implements RegisterForm{
+public class AbstractRegistrationForm implements RegisterForm, Serializable{
 	
 	protected String registerPassword;
 	protected String registerPasswordConfirm;
