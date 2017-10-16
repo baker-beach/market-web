@@ -71,15 +71,15 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 		Customer customer = CustomerHelper.getCustomer();
 		
 		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
+		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
 		
 		if (shopContext.getRequestData().containsKey("doOrder")) {
 			shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_SUMMARY);
 			if (checkoutStatusResolver.nextStepID(shopContext) == CheckoutStatusResolver.STEP_ORDER)
-				doOrder(request);
+				doOrder(request, flashMap);
 				throw new RedirectException(new Redirect(getNextCheckoutStep(shopContext, cart), null));
 		} else {
 			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_SUMMARY);
-			FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
 			flashMap.put("checkout", 1);
 			flashMap.put("messages", model.get("messages"));
 			if (cart.findItemsByQualifier(CartItemQualifier.PRODUCT, CartItemQualifier.VPRODUCT).size() < 1)
@@ -90,22 +90,16 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 
 	}
 
-	private void doOrder(HttpServletRequest request) throws ProcessableBoxException {
+	private void doOrder(HttpServletRequest request, FlashMap flashMap) throws ProcessableBoxException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		String shopCode = shopContext.getShopCode();
 		Customer customer = CustomerHelper.getCustomer();
-		
 		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
-
-		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
-
 		try {
 			paymentService.doPreOrder(cart, shopContext);
 		} catch (PaymentRedirectException pre) {
-
 			throw new RedirectException(new Redirect(pre.getUrl(), null, Redirect.RAW));
-
 		} catch (PaymentServiceException pe) {
+			flashMap.put("messages", pe.getMessages());	
 			throw new RedirectException(new Redirect("checkout-summary", null));
 		}
  
