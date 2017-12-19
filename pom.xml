@@ -10,7 +10,7 @@
 	<artifactId>market-web</artifactId>
 	<name>web</name>
 	<packaging>jar</packaging>
-	<version>3.2.0</version>
+	<version>3.3.0</version>
 	<properties>
 		<servlet-api.version>2.5</servlet-api.version>
 		<velocity.version>1.7</velocity.version>
@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-cart-api</artifactId>
-			<version>[3.0.3,3.1.0]</version>
+			<version>[3.1.0,3.2.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
@@ -47,7 +47,7 @@
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
 			<artifactId>market-order</artifactId>
-			<version>[3.0.0,3.1.0)</version>
+			<version>[3.1.0,3.2.0)</version>
 		</dependency>
 		<dependency>
 			<groupId>com.bakerbeach.market</groupId>
