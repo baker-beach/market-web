@@ -17,29 +17,30 @@ import org.joda.time.Days;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.bakerbeach.market.cms.service.CmsContextHolder;
 import com.bakerbeach.market.cms.service.Helper;
 import com.bakerbeach.market.commons.Sanitization;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.core.api.model.Filter;
 import com.bakerbeach.market.core.api.model.FilterList;
 import com.bakerbeach.market.core.api.model.Option;
-import com.bakerbeach.market.core.api.model.OrderItem;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.customer.model.AnonymousCustomer;
+import com.bakerbeach.market.order.api.model.OrderItem;
 
 @Component
 @Scope("prototype")
 public class ShopHelper extends Helper {
-	
+
 	public static Boolean isIdentified() {
 		Object principal = SecurityUtils.getSubject().getPrincipal();
 		return principal != null && !(principal instanceof AnonymousCustomer);
 	}
-	
+
 	public static Boolean isAuthenticated() {
 		return SecurityUtils.getSubject().isAuthenticated();
 	}
-	
+
 	public static BigDecimal getNetPrice(OrderItem orderItem) {
 		try {
 			BigDecimal hundred = new BigDecimal(100);
@@ -60,11 +61,11 @@ public class ShopHelper extends Helper {
 			return -1;
 		}
 	}
-	
+
 	public static String getFullName(Customer customer) {
 		return customer.getFirstName() + " " + customer.getMiddleName() + " " + customer.getLastName();
 	}
-	
+
 	public static String cf(Object number, String language, String country) {
 		return cf(number, new Locale(language, country));
 	}
@@ -80,18 +81,55 @@ public class ShopHelper extends Helper {
 			nf.setMinimumFractionDigits(2);
 			nf.setMinimumIntegerDigits(1);
 			StringBuilder buffer;
-			buffer = new StringBuilder(ShopContextHolder.getInstance().getLeftCurrencySymbol()).append(nf.format(number)).append(ShopContextHolder.getInstance().getRightCurrencySymbol());
+			buffer = new StringBuilder(ShopContextHolder.getInstance().getLeftCurrencySymbol())
+					.append(nf.format(number)).append(ShopContextHolder.getInstance().getRightCurrencySymbol());
 			return buffer.toString();
 		} else {
 			return null;
 		}
 	}
-	
+
+	public static String basePriceFormat(Object number, Object divisor) {
+		return basePriceFormat(number, divisor, ShopContextHolder.getInstance().getCurrentLocale());
+	}
+
+	public static String basePriceFormat(Object number, Object divisor, Locale locale) {
+		if (number != null && number instanceof Number && divisor != null && divisor instanceof Number) {
+			Double basePrice = ((Number) number).doubleValue() / ((Number) divisor).doubleValue();
+
+			NumberFormat nf = NumberFormat.getInstance(locale);
+			nf.setMaximumFractionDigits(2);
+			nf.setMinimumFractionDigits(2);
+			nf.setMinimumIntegerDigits(1);
+			StringBuilder buffer;
+			buffer = new StringBuilder(ShopContextHolder.getInstance().getLeftCurrencySymbol()).append(nf.format(basePrice)).append(ShopContextHolder.getInstance().getRightCurrencySymbol());
+			return buffer.toString();
+		} else {
+			return null;
+		}
+	}
+
+	public static String nf(Object number, String locale) {
+		if (number != null) {
+			NumberFormat nf = NumberFormat.getInstance(new Locale(locale));
+			nf.setMaximumFractionDigits(2);
+			nf.setMinimumFractionDigits(2);
+			nf.setMinimumIntegerDigits(1);
+			return nf.format(number);
+		} else {
+			return null;
+		}
+	}
+
+	public static String resourceUrlFeed(String key) {
+		return url("/resources" + key);
+	}
+
 	public static String tf(Object dateOrTime, String pattern) {
 		Locale locale = ShopContextHolder.getInstance().getCurrentLocale();
 		return tf(dateOrTime, pattern, locale);
 	}
-		
+
 	public static String tf(Object dateOrTime, String pattern, Locale locale) {
 		try {
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, locale);
@@ -105,15 +143,15 @@ public class ShopHelper extends Helper {
 		} catch (Exception e) {
 			LOG.error(ExceptionUtils.getStackTrace(e));
 		}
-		
+
 		return dateOrTime.toString();
 	}
-	
+
 	public static String df(Object date, String pattern) {
 		Locale locale = ShopContextHolder.getInstance().getCurrentLocale();
 		return df(date, pattern, locale);
 	}
-	
+
 	public static String df(Object date, String pattern, Locale locale) {
 		try {
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, locale);
@@ -121,14 +159,14 @@ public class ShopHelper extends Helper {
 				return ((LocalDate) date).format(formatter);
 			} else if (date instanceof LocalDateTime) {
 				return ((LocalDateTime) date).format(formatter);
-			}			
+			}
 		} catch (Exception e) {
 			LOG.error(ExceptionUtils.getStackTrace(e));
 		}
-		
+
 		return date.toString();
 	}
-	
+
 	public static String currencySymbol() {
 		return ShopContextHolder.getInstance().getLeftCurrencySymbol();
 	}
@@ -144,14 +182,14 @@ public class ShopHelper extends Helper {
 
 	public String productUrl(String ean, String selectedEan) {
 		String url;
-		if(ShopContextHolder.getInstance().getShopType().equals(ShopContext.FLASH_TYPE))
+		if (ShopContextHolder.getInstance().getShopType().equals(ShopContext.FLASH_TYPE))
 			url = url(String.format("/product/%s/", ean));
 		else
 			url = pageUrl("product-" + ean);
-		
-		if(selectedEan != null && selectedEan.length() > 0)
+
+		if (selectedEan != null && selectedEan.length() > 0)
 			url = url + "?selectedean=" + selectedEan;
-		
+
 		return url;
 	}
 
@@ -159,28 +197,29 @@ public class ShopHelper extends Helper {
 		String code = Sanitization.sanitizeCode(brand).concat(".brand");
 		return code;
 	}
-	
+
 	public String brandUrl(String brand) {
 		return pageUrl("brand-".concat(Sanitization.sanitizeCode(brand)));
 	}
 
+	public static int randomInt(int minimum, int maximum) {
+		return minimum + (int) (Math.random() * maximum);
+	}
 
-    public static int randomInt(int minimum, int maximum) {
-        return minimum + (int)(Math.random() * maximum);
-    }
-    
-   	public String facetUrl(String filterUrl, FilterList filterList, Option currentOption) {
+	public String facetUrl(String filterUrl, FilterList filterList, Option currentOption) {
 		Locale locale = ShopContextHolder.getInstance().getCurrentLocale();
-		
-//		if (!filterList.isTranslated()) {
-			for (Filter filter : filterList.getAvailable()) {
-				for (Option option : filter.getOptions()) {
-					String msg = translationService.getMessage(filter.getId(), "url", option.getCode(), null, option.getCode(), locale);
-//					String msg = translationService.getMessage("facet", "url", option.getCode(), null, option.getCode(), locale);
-					option.setValue(msg);
-				}
-			}			
-//		}
+
+		// if (!filterList.isTranslated()) {
+		for (Filter filter : filterList.getAvailable()) {
+			for (Option option : filter.getOptions()) {
+				String msg = translationService.getMessage(filter.getId(), "url", option.getCode(), null,
+						option.getCode(), locale);
+				// String msg = translationService.getMessage("facet", "url", option.getCode(),
+				// null, option.getCode(), locale);
+				option.setValue(msg);
+			}
+		}
+		// }
 
 		StringBuilder url = new StringBuilder();
 
@@ -211,8 +250,12 @@ public class ShopHelper extends Helper {
 		return url(url.toString());
 	}
 
-   	public String substringAfterLast(String str, String separator) {
-   		return StringUtils.substringAfterLast(str, separator);
-   	}
-   	
+	public String substringAfterLast(String str, String separator) {
+		return StringUtils.substringAfterLast(str, separator);
+	}
+
+	public ShopContext getShopContext() {
+		return ShopContextHolder.getInstance();
+	}
+
 }

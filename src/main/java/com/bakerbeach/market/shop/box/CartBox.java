@@ -12,8 +12,10 @@ import com.bakerbeach.market.cart.api.service.CartService;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.Customer;
+import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.CartHolder;
 import com.bakerbeach.market.shop.service.CustomerHelper;
+import com.bakerbeach.market.shop.service.ShopContextHolder;
 
 @Component("com.bakerbeach.market.shop.box.CartBox")
 @Scope("prototype")
@@ -28,8 +30,10 @@ public class CartBox extends AbstractBox {
 
 	@Override
 	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model) {
+		ShopContext shopContext = ShopContextHolder.getInstance();
+
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 		getData().put("cart", cart);
 	}
 

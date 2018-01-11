@@ -13,22 +13,23 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.bakerbeach.market.catalog.model.FieldOption;
-import com.bakerbeach.market.catalog.model.Pager;
-import com.bakerbeach.market.catalog.service.CatalogService;
-import com.bakerbeach.market.catalog.utils.FacetFactory;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.service.PageService;
-import com.bakerbeach.market.core.api.model.Filter;
-import com.bakerbeach.market.core.api.model.FilterList;
-import com.bakerbeach.market.core.api.model.Option;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 import com.bakerbeach.market.translation.api.model.I18NMessage;
 import com.bakerbeach.market.translation.api.service.TranslationService;
 import com.bakerbeach.market.translation.service.TranslationServiceException;
+import com.bakerbeach.market.xcatalog.model.Facet;
+import com.bakerbeach.market.xcatalog.model.FacetOption;
+import com.bakerbeach.market.xcatalog.model.FacetOptionImpl;
+import com.bakerbeach.market.xcatalog.model.Facets;
+import com.bakerbeach.market.xcatalog.model.Pager;
+import com.bakerbeach.market.xcatalog.service.XCatalogService;
+import com.bakerbeach.market.xcatalog.utils.XFacetFactory;
 
-public abstract class AbstractProductListBox extends AbstractBox {
+
+public abstract class AbstractXProductListBox extends AbstractBox {
 	protected static final long serialVersionUID = 1L;
 
 	protected static final String QUERY_PARAM = "q";
@@ -62,7 +63,7 @@ public abstract class AbstractProductListBox extends AbstractBox {
 	protected Pager pager;
 
 	@Autowired
-	protected CatalogService catalogService;
+	protected XCatalogService catalogService;
 
 	@Autowired
 	protected PageService pageService;
@@ -159,30 +160,30 @@ public abstract class AbstractProductListBox extends AbstractBox {
 		return new Pager(pageSize, pageNumber);
 	}
 	
-	protected FilterList getFilterList(Boolean isGetOnly, ListValuedMap<String, String> parameter) {	
-		FilterList filterList = FacetFactory.newInstance(isGetOnly);
+	protected Facets getFacets(Boolean isGetOnly, ListValuedMap<String, String> parameter) {
+		Facets filterList = XFacetFactory.newFacetList(isGetOnly);
 
 		for (String key : parameter.keySet()) {
 			if (key.equals("min_price")) {
-				Filter filter = filterList.get("price");
+				Facet filter = filterList.get("price");
 				if (filter != null) {
-					Option option = new FieldOption(parameter.get("min_price").get(0), null, true);
+					FacetOption option = new FacetOptionImpl(parameter.get("min_price").get(0), null, true);
 					filter.addOption(option);
 					filter.setActive(true);
 				}				
 			} else if (key.equals("max_price")) {
-				Filter filter = filterList.get("price");
+				Facet filter = filterList.get("price");
 				if (filter != null) {
-					Option option = new FieldOption(parameter.get("max_price").get(0), null, true);
+					FacetOption option = new FacetOptionImpl(parameter.get("max_price").get(0), null, true);
 					filter.addOption(option);
 					filter.setActive(true);
 				}
 			} else {
-				Filter filter = filterList.get(key);
+				Facet filter = filterList.get(key);
 				if (filter != null) {
 					List<String> values = parameter.get(key);
 					for (String code : values) {				
-						Option option = new FieldOption(code, null, true);
+						FacetOption option = new FacetOptionImpl(code, null, true);
 						filter.addOption(option);
 						filter.setActive(true);
 					}
@@ -238,7 +239,7 @@ public abstract class AbstractProductListBox extends AbstractBox {
 		}
 		
 		if (StringUtils.isNotBlank(attributePath)) {
-			List<String> tags = new ArrayList<>(FacetFactory.getUrlRelevantFilters());
+			List<String> tags = new ArrayList<>(XFacetFactory.getUrlRelevantFilters());
 			tags.remove("category");
 			
 			List<String> attributes = Arrays.asList(attributePath.split("_"));
@@ -278,7 +279,7 @@ public abstract class AbstractProductListBox extends AbstractBox {
 		
 		String attributePath = StringUtils.substringAfter(path, "/_");
 		if (!attributePath.isEmpty()) {
-			List<String> tags = new ArrayList<>(FacetFactory.getUrlRelevantFilters());
+			List<String> tags = new ArrayList<>(XFacetFactory.getUrlRelevantFilters());
 			tags.remove("category");
 			
 			List<String> attributes = Arrays.asList(attributePath.split("_"));

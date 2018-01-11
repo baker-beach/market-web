@@ -21,7 +21,6 @@ public class UrlRewriteFilter extends AbstractContextFilter {
 	private UrlRewriter inboundUrlRewriter;
 	private UrlRewriter outboundUrlRewriter;
 
-	@SuppressWarnings("unused")
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 
 		final HttpServletRequest httpServletRequest = (HttpServletRequest) request;

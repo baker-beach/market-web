@@ -52,11 +52,16 @@ public class CheckoutReturnPaymentBox extends AbstractBox implements Processable
 			paymentService.processReturn(shopContext, param);
 		} catch (PaymentServiceException e) {
 			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_PAYMENT);
-			throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
+			if(shopContext.getRequestData().containsKey("iframe_redirect")){
+				request.getSession().setAttribute("messages", e.getMessages());
+			}else			
+				throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
 		}
 
 		if (shopContext.getRequestData().containsKey("redirect"))
 			throw new RedirectException(new Redirect((String) shopContext.getRequestData().get("redirect"), null));
+		else if (shopContext.getRequestData().containsKey("iframe_redirect"))
+			shopContext.getRequestData().put("page_id", (String) shopContext.getRequestData().get("iframe_redirect"));
 		else
 			throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
 

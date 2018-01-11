@@ -275,7 +275,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public void setCartCode(String cartCode) {
 		this.cartCode = cartCode;
 	}
-	
+
 	@Override
 	public List<Locale> getLocales() {
 		return locales;
@@ -621,9 +621,11 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 
 	@Override
 	public String getApplicationPath() {
-		StringBuilder path = new StringBuilder(protocol.toLowerCase());
+		String p = this.getHttpServletRequest().isSecure() ? "https" : "http";
+		StringBuilder path = new StringBuilder(p);
 		try {
-			path.append("://").append(host).append(":").append(port)
+			path.append("://").append(host).append(":")
+					.append(("http".equals(p)) ? this.getPort() : this.getSecurePort())
 					.append(UrlHelper.getContextPath(httpServletRequest, httpServletRequest.getCharacterEncoding()));
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
@@ -639,7 +641,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 			return currencies.get(defaultCurrency);
 
 	}
-	
+
 	@Override
 	public void setCurrency(String currency) {
 		if (currencies.containsKey(currency))
@@ -650,7 +652,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public String getCurrency() {
 		return getCurrentCurrency().getIsoCode();
 	}
-	
+
 	@Override
 	public Boolean isCurrencySymbolAtFront() {
 		return getCurrentCurrency().isCurrencySymbolAtFront();
@@ -660,7 +662,7 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public String getCurrencySymbol() {
 		return getCurrentCurrency().getSymbol();
 	}
-	
+
 	public String getDefaultCurrency() {
 		return defaultCurrency;
 	}
@@ -676,5 +678,5 @@ public class ShopContextImpl implements ShopContext, CmsContext {
 	public void setCurrencies(Map<String, Currency> currencies) {
 		this.currencies = currencies;
 	}
-
+	
 }

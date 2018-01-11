@@ -22,23 +22,25 @@ import com.bakerbeach.market.shop.service.ShopContextHolder;
 
 @Component("com.bakerbeach.market.shop.box.CurrencyBox")
 @Scope("prototype")
-public class CurrencyBox extends AbstractBox implements ProcessableBox{	
+public class CurrencyBox extends AbstractBox implements ProcessableBox {
 	private static final long serialVersionUID = 1L;
 
 	@Autowired
 	private CartService cartService;
 
-	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model) throws RedirectException{
+	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model)
+			throws RedirectException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
+
 		Customer customer = CustomerHelper.getCustomer();
 
-		Cart cart = CartHolder.getInstance(cartService, customer);
-		
-		if(shopContext.getRequestData().containsKey("currency")){
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
+
+		if (shopContext.getRequestData().containsKey("currency")) {
 			String currency = (String) shopContext.getRequestData().get("currency");
 			shopContext.setCurrency(currency);
 			cartService.setCurrency(shopContext, cart, customer);
-			
+
 			throw new RedirectException(new Redirect(request.getHeader("Referer"), null, Redirect.RAW));
 		}
 	}

@@ -17,5 +17,5 @@ public interface RegisterForm {
 	String getRegisterLastName();
 	
 	String getRegisterSuffix();
-
+	
 }

@@ -32,20 +32,20 @@ public class CheckoutSummaryBox extends AbstractCheckoutStepBox {
 	@Override
 	protected void handleActionRequestForward(HttpServletRequest request, HttpServletResponse response,
 			ModelMap modelMap) throws ProcessableBoxException {
-		
-		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		
-		if (cart.findItemsByQualifier(CartItemQualifier.PRODUCT, CartItemQualifier.VPRODUCT).size() < 1){
+
+		Customer customer = CustomerHelper.getCustomer();
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
+
+		if (cart.findItemsByQualifier(CartItemQualifier.PRODUCT, CartItemQualifier.VPRODUCT).size() < 1) {
 			checkoutStatusResolver.clear(shopContext);
 			throw new RedirectException(new Redirect("cart", null));
 		}
-		
-		
+
 		getData().put("cart", cart);
 	}
-	
+
 	@Override
 	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
 
@@ -55,5 +55,5 @@ public class CheckoutSummaryBox extends AbstractCheckoutStepBox {
 	public Integer getStep() {
 		// TODO Auto-generated method stub
 		return CheckoutStatusResolver.STEP_SUMMARY;
-	}	
+	}
 }

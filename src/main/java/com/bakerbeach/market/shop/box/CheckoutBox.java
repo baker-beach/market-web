@@ -1,9 +1,12 @@
 package com.bakerbeach.market.shop.box;
 
+import java.math.BigDecimal;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -15,18 +18,19 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 import com.bakerbeach.market.address.api.service.CustomerAddressService;
 import com.bakerbeach.market.address.api.service.CustomerAdressServiceException;
 import com.bakerbeach.market.cart.api.service.CartService;
+import com.bakerbeach.market.cart.api.service.CartServiceException;
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.cms.box.ProcessableBox;
 import com.bakerbeach.market.cms.box.ProcessableBoxException;
 import com.bakerbeach.market.cms.box.RedirectException;
 import com.bakerbeach.market.cms.model.Redirect;
+import com.bakerbeach.market.commons.Messages;
 import com.bakerbeach.market.core.api.model.Cart;
 import com.bakerbeach.market.core.api.model.CartItemQualifier;
 import com.bakerbeach.market.core.api.model.Customer;
 import com.bakerbeach.market.core.api.model.CustomerAddress;
-import com.bakerbeach.market.core.api.model.Messages;
-import com.bakerbeach.market.core.api.model.Order;
 import com.bakerbeach.market.core.api.model.ShopContext;
+import com.bakerbeach.market.order.api.model.Order;
 import com.bakerbeach.market.order.api.service.OrderService;
 import com.bakerbeach.market.order.api.service.OrderServiceException;
 import com.bakerbeach.market.payment.api.model.PaymentInfo;
@@ -43,7 +47,7 @@ import com.bakerbeach.market.shop.service.ShopContextHolder;
 public class CheckoutBox extends AbstractBox implements ProcessableBox {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	@Autowired(required = false)
 	protected CheckoutStatusResolver checkoutStatusResolver = new CheckoutStatusResolver();
 
@@ -62,19 +66,20 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 	private OrderService orderService;
 
 	@Override
-	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model)
-			throws ProcessableBoxException {
+	public void handleActionRequest(HttpServletRequest request, HttpServletResponse response, ModelMap model) throws ProcessableBoxException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
+		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
+
 		if (shopContext.getRequestData().containsKey("doOrder")) {
 			shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_SUMMARY);
 			if (checkoutStatusResolver.nextStepID(shopContext) == CheckoutStatusResolver.STEP_ORDER)
-				doOrder(request);
-				throw new RedirectException(new Redirect(getNextCheckoutStep(shopContext, cart), null));
+				doOrder(request, flashMap);
+			throw new RedirectException(new Redirect(getNextCheckoutStep(shopContext, cart), null));
 		} else {
 			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_SUMMARY);
-			FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
 			flashMap.put("checkout", 1);
 			flashMap.put("messages", model.get("messages"));
 			if (cart.findItemsByQualifier(CartItemQualifier.PRODUCT, CartItemQualifier.VPRODUCT).size() < 1)
@@ -85,53 +90,55 @@ public class CheckoutBox extends AbstractBox implements ProcessableBox {
 
 	}
 
-	private void doOrder(HttpServletRequest request) throws ProcessableBoxException {
+	private void doOrder(HttpServletRequest request, FlashMap flashMap) throws ProcessableBoxException {
 		ShopContext shopContext = ShopContextHolder.getInstance();
 		Customer customer = CustomerHelper.getCustomer();
-		Cart cart = CartHolder.getInstance(cartService, customer);
-		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
-
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
 		try {
-			paymentService.doPreOrder(cart, shopContext);
+			if (cart.getTotal().getGross().compareTo(BigDecimal.ZERO) > 0)
+				paymentService.doPreOrder(cart, shopContext);
 		} catch (PaymentRedirectException pre) {
-
 			throw new RedirectException(new Redirect(pre.getUrl(), null, Redirect.RAW));
-
 		} catch (PaymentServiceException pe) {
-
+			flashMap.put("messages", pe.getMessages());
+			throw new RedirectException(new Redirect("checkout-summary", null));
 		}
- 
+
 		try {
 			Order order = orderService.order(cart, customer, shopContext);
 			shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_ORDER);
 			Redirect redirect = new Redirect(getNextCheckoutStep(shopContext, cart), null);
 			shopContext.setOrderId(null);
 			shopContext.getValidSteps().clear();
-			cartService.clear(cart);
-			
+
+			try {
+				cartService.setStatus(customer, cart, "ORDERED");
+				cartService.saveCart(customer, cart);
+				CartHolder.setInstance(null);
+			} catch (CartServiceException e) {
+				log.error(ExceptionUtils.getStackTrace(e));
+			}
+
 			flashMap.put("order", order);
 
 			throw new RedirectException(redirect);
 		} catch (OrderServiceException e) {
-			
+
 			Messages messages = e.getMessages();
 			if (messages != null && !messages.isEmpty()) {
-				flashMap.put("messages", messages);				
+				flashMap.put("messages", messages);
 			}
-			
+
 			shopContext.getValidSteps().remove(CheckoutStatusResolver.STEP_SUMMARY);
 			throw new RedirectException(new Redirect(getNextCheckoutStep(shopContext, cart), null));
 		}
 	}
 
-
-
 	private void initCheckout(ShopContext shopContext, Customer customer, Cart cart) {
 
 		try {
 			Map<String, CustomerAddress> adddresses = addressService.findDefaultsByCustomer(customer);
-			if (!adddresses.isEmpty() && shopContext
-					.isCountryValid(adddresses.get(CustomerAddress.TAG_DEFAULT_SHIPPING_ADDRESS).getCountryCode())) {
+			if (!adddresses.isEmpty() && shopContext.isCountryValid(adddresses.get(CustomerAddress.TAG_DEFAULT_SHIPPING_ADDRESS).getCountryCode())) {
 
 				shopContext.setBillingAddress(adddresses.get(CustomerAddress.TAG_DEFAULT_BILLING_ADDRESS));
 				shopContext.setShippingAddress(adddresses.get(CustomerAddress.TAG_DEFAULT_SHIPPING_ADDRESS));

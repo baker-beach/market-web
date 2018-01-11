@@ -1,4 +1,4 @@
-	package com.bakerbeach.market.shop.box;
+package com.bakerbeach.market.shop.box;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +34,7 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 
 	@Autowired
 	private PaymentService paymentService;
-	
+
 	@Autowired
 	private CartService cartService;
 
@@ -44,7 +44,9 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 			ModelMap modelMap) throws ProcessableBoxException {
 		Customer customer = CustomerHelper.getCustomer();
 		ShopContext shopContext = ShopContextHolder.getInstance();
-		Cart cart = CartHolder.getInstance(cartService, customer);
+
+		Cart cart = CartHolder.getInstance(cartService, shopContext, customer);
+
 		if (request.getMethod().equals("GET")) {
 			try {
 				PaymentInfo paymentInfo = paymentService.initPayment(shopContext, customer, cart);
@@ -54,23 +56,24 @@ public class CheckoutPaymentBox extends AbstractCheckoutStepBox {
 		} else {
 			try {
 				Map<String, String[]> parameters = request.getParameterMap();
-				Map<String,String> param = new HashMap<String,String>();
-				for(String key : parameters.keySet()){
-					param.put(key, parameters.get(key)[0]);	
+				Map<String, String> param = new HashMap<String, String>();
+				for (String key : parameters.keySet()) {
+					param.put(key, parameters.get(key)[0]);
 				}
 				PaymentInfo paymentInfo = paymentService.configPaymentMethod(shopContext, param);
-				if(paymentInfo.isPaymentValid()){
+				if (paymentInfo.isPaymentValid()) {
 					shopContext.getValidSteps().add(CheckoutStatusResolver.STEP_PAYMENT);
-					throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext),null));
+					throw new RedirectException(new Redirect(checkoutStatusResolver.nextStepPageId(shopContext), null));
 				}
 				throw new RedirectException(new Redirect(request.getHeader("Referer"), null, Redirect.RAW));
-			} catch (PaymentServiceException e) {}
+			} catch (PaymentServiceException e) {
+			}
 		}
 
 	}
-	
+
 	@Override
 	public Integer getStep() {
 		return CheckoutStatusResolver.STEP_PAYMENT;
-	}	
+	}
 }

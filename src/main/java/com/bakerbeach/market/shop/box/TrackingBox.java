@@ -9,8 +9,8 @@ import org.springframework.ui.ModelMap;
 
 import com.bakerbeach.market.cms.box.AbstractBox;
 import com.bakerbeach.market.core.api.model.Customer;
-import com.bakerbeach.market.core.api.model.Order;
 import com.bakerbeach.market.core.api.model.ShopContext;
+import com.bakerbeach.market.order.api.model.Order;
 import com.bakerbeach.market.shop.service.CustomerHelper;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
 
@@ -42,7 +42,7 @@ public class TrackingBox extends AbstractBox {
 		if(order != null)
 			getData().put(ORDER, order);
 
-		ProductBox productBox = (ProductBox) modelMap.get("productBox0");
+		XProductBox productBox = (XProductBox) modelMap.get("productBox0");
 		if(productBox != null){
 			getData().put("product", productBox.getData().get("product"));
 			getData().put("deal", productBox.getData().get("deal"));

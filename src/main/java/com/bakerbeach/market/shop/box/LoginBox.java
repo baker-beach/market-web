@@ -1,5 +1,7 @@
 package com.bakerbeach.market.shop.box;
 
+import java.util.Arrays;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -15,9 +17,9 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 
 import com.bakerbeach.market.cms.box.RedirectException;
 import com.bakerbeach.market.cms.model.Redirect;
+import com.bakerbeach.market.commons.Message;
 import com.bakerbeach.market.commons.MessageImpl;
-import com.bakerbeach.market.core.api.model.Message;
-import com.bakerbeach.market.core.api.model.Messages;
+import com.bakerbeach.market.commons.Messages;
 import com.bakerbeach.market.core.api.model.ShopContext;
 import com.bakerbeach.market.shop.model.forms.Login;
 import com.bakerbeach.market.shop.service.ShopContextHolder;
@@ -36,7 +38,7 @@ public class LoginBox extends AbstractLoginBox {
 		ShopHelper helper = (ShopHelper) model.get("helper");
 
 		FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
-		
+
 		if (request.getMethod().equals(RequestMethod.POST.toString())) {
 			Login login = new Login();
 			BindingResult result = bind(login, request);
@@ -44,21 +46,23 @@ public class LoginBox extends AbstractLoginBox {
 			flashMap.put("login", login);
 			flashMap.put("messages", messages);
 			flashMap.put("loginTarget", "loginForm");
-			
+
 			if (!result.hasErrors()) {
 				try {
-					doLogin(login.getLoginEmail(), login.getLoginPassword(),true);
+					doLogin(login.getLoginEmail(), login.getLoginPassword(), true);
 					Redirect redirect = onSuccessfulAuthentication(request, helper);
 
 					if (StringUtils.isNotBlank(login.getTargetUrlId())) {
-						redirect = new Redirect(login.getTargetUrlId(), null, Redirect.URL_ID);						
+						redirect = new Redirect(login.getTargetUrlId(), null, Redirect.URL_ID);
 					}
 
-					messages.addGlobalError(new MessageImpl(Message.TYPE_INFO, "login.success"));
-					
+					messages.addGlobalError(new MessageImpl("login", Message.TYPE_INFO, "login.success",
+							Arrays.asList(Message.TAG_BOX), Arrays.asList()));
+
 					throw new RedirectException(redirect);
 				} catch (AuthenticationException e) {
-					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "login.error"));
+					messages.addGlobalError(new MessageImpl("login", Message.TYPE_ERROR, "login.error",
+							Arrays.asList(Message.TAG_BOX), Arrays.asList()));
 				}
 			} else {
 				getFieldErrors(result, messages);
@@ -72,7 +76,7 @@ public class LoginBox extends AbstractLoginBox {
 			}
 		}
 	}
-	
+
 	@Override
 	public void handleRenderRequest(HttpServletRequest request, HttpServletResponse response, ModelMap modelMap) {
 		super.handleRenderRequest(request, response, modelMap);
