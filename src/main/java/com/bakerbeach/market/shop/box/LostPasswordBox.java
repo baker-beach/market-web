@@ -1,5 +1,8 @@
 package com.bakerbeach.market.shop.box;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -53,11 +56,25 @@ public class LostPasswordBox extends AbstractBox implements ProcessableBox {
 			BindingResult result = bind(form, request);
 			if (!result.hasErrors()) {
 				try {
-					ShopContext shopContext = ShopContextHolder.getInstance();
-					customerService.renewPassword(form.getEmail(), shopContext.getShopCode());
-					messages.add(new MessageImpl(Message.TYPE_INFO, "newPassword.success"));
+					request.getRemoteHost();
+					request.getScheme();
+					request.getContextPath();
 					
-					throw new RedirectException(new Redirect("login-password", null, Redirect.URL_ID));
+					try {
+						ShopContext shopContext = ShopContextHolder.getInstance();
+						shopContext.getHost();
+						
+						
+						URI uri = new URI(request.getScheme(), shopContext.getHost(), request.getContextPath().concat("/resetpassword"), null);
+						System.out.println(uri);
+					} catch (URISyntaxException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					ShopContext shopContext = ShopContextHolder.getInstance();
+					String token = customerService.createResetPasswordToken(form.getEmail(), shopContext.getShopCode());
+					messages.add(new MessageImpl(Message.TYPE_INFO, "passwordToken.success"));
 				} catch (CustomerNotFoundException e) {
 					messages.addGlobalError(new MessageImpl(Message.TYPE_ERROR, "newPassword.error.customerNotfound"));					
 				} catch (CustomerServiceException e) {
